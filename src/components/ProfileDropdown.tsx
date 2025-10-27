@@ -35,6 +35,10 @@ interface ProfileDropdownProps {
 }
 
 const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ groups, userDues, onHomeClick }) => {
+  // Debug logging to see if userDues is updating
+  console.log('🔍 ProfileDropdown render - userDues:', userDues)
+  console.log('🔍 ProfileDropdown render - timestamp:', userDues?.lastUpdated)
+  
   // const { address } = useAccount()
   // const [userDues, setUserDues] = useState<UserDues>({
   //   totalOwed: 0,
@@ -178,6 +182,13 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ groups, userDues, onH
               </div>
             </div>
           </div>
+
+          {/* Debug Info */}
+          {userDues?.lastUpdated && (
+            <div className="px-2 py-1 text-xs text-muted-foreground border-t">
+              Last updated: {new Date(userDues.lastUpdated).toLocaleTimeString()}
+            </div>
+          )}
 
           {/* Optimal Settlement Transactions */}
           {userDues?.globalOptimalTransactions && userDues.globalOptimalTransactions.length > 0 && (

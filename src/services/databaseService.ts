@@ -109,6 +109,7 @@ export interface UserDues {
     amount: number
     description: string
   }[]
+  lastUpdated?: number // Timestamp for forcing React updates
 }
 
 class DatabaseService {
@@ -124,7 +125,7 @@ class DatabaseService {
     try {
       const user = await this.client.user.upsert({
         where: { walletAddress },
-        update: { 
+        update: {
           ensName,
           displayName,
           updatedAt: new Date()
@@ -152,7 +153,7 @@ class DatabaseService {
             include: { group: true }
           },
           splitsCreated: {
-            include: { 
+            include: {
               members: { include: { user: true } },
               group: true
             }
@@ -169,18 +170,18 @@ class DatabaseService {
   async addFriend(userWallet: string, friendData: FriendData) {
     try {
       console.log('🔄 Adding friend to database:', { userWallet, friendData })
-      
+
       // Get or create the user who is adding the friend
       const user = await this.createOrUpdateUser(userWallet)
-      
+
       // Determine friend's wallet address and ENS
       let friendWalletAddress: string
-      
+
       if (friendData.isENS) {
         // For ENS names, we must have a resolved address
         // If no resolved address is available, we can't create the user
         friendWalletAddress = friendData.resolvedAddress || friendData.friendAddress || ''
-        
+
         if (!friendWalletAddress || !this.isEthereumAddress(friendWalletAddress)) {
           console.error('❌ Cannot add ENS friend without valid resolved address')
           throw new Error(`Failed to resolve ENS name: ${friendData.walletId}. Please ensure the ENS name exists and try again.`)
@@ -193,9 +194,9 @@ class DatabaseService {
         }
         friendWalletAddress = friendData.walletId
       }
-      
+
       const friendENSName = friendData.isENS ? friendData.walletId : (friendData.resolvedENS || friendData.friendENS)
-      
+
       console.log('📝 Friend data details:', {
         isENS: friendData.isENS,
         walletId: friendData.walletId,
@@ -204,7 +205,7 @@ class DatabaseService {
         finalWalletAddress: friendWalletAddress,
         finalENSName: friendENSName
       })
-      
+
       // Get or create the friend user
       const friend = await this.createOrUpdateUser(
         friendWalletAddress,
@@ -253,7 +254,7 @@ class DatabaseService {
   async getFriends(userWallet: string): Promise<FriendData[]> {
     try {
       console.log('🔄 Fetching friends for user:', userWallet)
-      
+
       const user = await this.getUserByWallet(userWallet)
       if (!user) {
         console.log('❌ User not found for wallet:', userWallet)
@@ -268,8 +269,8 @@ class DatabaseService {
 
       const friends = friendships.map(friendship => ({
         id: friendship.id,
-        name: friendship.nickname || friendship.friend.displayName || 
-              (friendship.friendENS || `${friendship.friendAddress.slice(0, 6)}...${friendship.friendAddress.slice(-4)}`),
+        name: friendship.nickname || friendship.friend.displayName ||
+          (friendship.friendENS || `${friendship.friendAddress.slice(0, 6)}...${friendship.friendAddress.slice(-4)}`),
         walletId: friendship.isENS ? (friendship.friendENS || friendship.friend.ensName || friendship.friendAddress) : friendship.friendAddress,
         resolvedAddress: friendship.friendAddress,
         resolvedENS: friendship.friendENS,
@@ -312,12 +313,12 @@ class DatabaseService {
   async createGroup(creatorWallet: string, name: string, memberWallets: string[]) {
     try {
       console.log('🔄 Creating group:', { creatorWallet, name, memberWallets })
-      
+
       // Validate that we have at least one member
       if (!memberWallets || memberWallets.length === 0) {
         throw new Error('Cannot create group with no members')
       }
-      
+
       // Ensure all member wallets are valid Ethereum addresses
       const validMemberWallets = memberWallets.filter(wallet => {
         const isValid = this.isEthereumAddress(wallet)
@@ -326,11 +327,11 @@ class DatabaseService {
         }
         return isValid
       })
-      
+
       if (validMemberWallets.length === 0) {
         throw new Error('No valid Ethereum addresses found in member wallets')
       }
-      
+
       const creator = await this.createOrUpdateUser(creatorWallet)
 
       // Get all member users (ensure they exist in database)
@@ -343,7 +344,7 @@ class DatabaseService {
       console.log(`🔄 Creating group with:`)
       console.log(`   👤 Creator ID: ${creator.id}`)
       console.log(`   👥 Member Users:`, memberUsers.map(u => ({ id: u.id, wallet: u.walletAddress })))
-      
+
       // Check if creator is already in a group with any of these members
       const uniqueMembers = memberUsers.filter(u => u.id !== creator.id)
       console.log(`   🧭 Unique Members (excluding creator):`, uniqueMembers.map(u => ({ id: u.id, wallet: u.walletAddress })))
@@ -374,10 +375,10 @@ class DatabaseService {
           }
         },
         include: {
-          members: { 
-            include: { 
-              user: true 
-            } 
+          members: {
+            include: {
+              user: true
+            }
           }
         }
       })
@@ -413,12 +414,12 @@ class DatabaseService {
         const group = membership.group
         const totalSplits = group.splits.length
         const settledSplits = group.splits.filter(s => s.status === 'SETTLED').length
-        
+
         // Calculate user's share from active splits
-        const userSplits = group.splits.flatMap(split => 
+        const userSplits = group.splits.flatMap(split =>
           split.members.filter(member => member.userId === user.id)
         )
-        const totalOwed = userSplits.reduce((sum, member) => 
+        const totalOwed = userSplits.reduce((sum, member) =>
           sum + (member.isPaid ? 0 : Number(member.amount)), 0
         )
 
@@ -441,10 +442,58 @@ class DatabaseService {
   }
 
   // Split Operations
+  async getGroupSplits(groupId: string) {
+    try {
+      const splits = await this.client.split.findMany({
+        where: { groupId },
+        include: {
+          group: true,
+          members: {
+            include: { user: true }
+          }
+        },
+        orderBy: { createdAt: 'desc' }
+      })
+
+      return splits.map(split => {
+        // Find the payer's name from the members
+        const payerMember = split.members.find(member => member.user.walletAddress === split.paidBy)
+        const paidByName = payerMember ? payerMember.user.displayName : `${split.paidBy?.slice(0, 6)}...${split.paidBy?.slice(-4)}`
+
+        return {
+          id: split.id,
+          groupId: split.groupId,
+          groupName: split.group.name,
+          title: split.title,
+          description: split.description,
+          totalAmount: Number(split.totalAmount),
+          currency: split.currency,
+          splitType: split.splitType,
+          status: split.status,
+          paidBy: split.paidBy,
+          paidByName: paidByName,
+          createdAt: split.createdAt,
+          members: split.members.map(member => ({
+            id: member.id,
+            userId: member.userId,
+            userWallet: member.user.walletAddress,
+            userName: member.user.displayName,
+            amount: Number(member.amount),
+            isPaid: member.isPaid,
+            paidAt: member.paidAt
+          }))
+        }
+      })
+    } catch (error) {
+      console.error('❌ Error fetching group splits:', error)
+      return []
+    }
+  }
+
   async createSplit(splitData: SplitData) {
     try {
       const creator = await this.createOrUpdateUser(splitData.createdBy)
-      
+
       const split = await this.client.split.create({
         data: {
           groupId: splitData.groupId,
@@ -489,18 +538,46 @@ class DatabaseService {
     try {
       const user = await this.getUserByWallet(userWallet)
       if (!user) {
-        return { 
-          userWallet, 
-          totalOwed: 0, 
-          totalOwedToUser: 0, 
-          netBalance: 0, 
+        return {
+          userWallet,
+          totalOwed: 0,
+          totalOwedToUser: 0,
+          netBalance: 0,
           pendingGroups: [],
           globalOptimalTransactions: []
         }
       }
 
-      const splitMembers = await this.client.splitMember.findMany({
+      // Get all groups where user is a member
+      const userGroups = await this.client.groupMember.findMany({
         where: { userId: user.id },
+        include: { group: true }
+      })
+
+      // Get ALL splits from those groups (not just where user is a member)
+      const groupIds = userGroups.map(g => g.groupId)
+      const allGroupSplits = await this.client.split.findMany({
+        where: {
+          groupId: { in: groupIds },
+          status: { not: 'SETTLED' }
+        },
+        include: {
+          group: true,
+          members: {
+            include: { user: true }
+          }
+        }
+      })
+
+      // Now get only the split members for this specific user
+      const splitMembers = await this.client.splitMember.findMany({
+        where: {
+          userId: user.id,
+          split: {
+            groupId: { in: groupIds },
+            status: { not: 'SETTLED' }
+          }
+        },
         include: {
           split: {
             include: { group: true }
@@ -523,7 +600,7 @@ class DatabaseService {
 
         const groupId = split.groupId
         const groupName = split.group.name
-        
+
         if (!groupDues.has(groupId)) {
           groupDues.set(groupId, {
             groupId,
@@ -534,7 +611,7 @@ class DatabaseService {
         }
 
         const group = groupDues.get(groupId)!
-        
+
         if (!member.isPaid) {
           const amount = Number(member.amount)
           totalOwed += amount
@@ -550,36 +627,20 @@ class DatabaseService {
               NOT: { userId: user.id }
             }
           })
-          
+
           const amountOwedToUser = unpaidMembers.reduce(
             (sum, unpaidMember) => sum + Number(unpaidMember.amount), 0
           )
-          
+
           totalOwedToUser += amountOwedToUser
           group.amountOwedToUser += amountOwedToUser
         }
       }
 
-      // Get all splits for the user to calculate optimal settlements
-      const userSplits = await this.client.split.findMany({
-        where: {
-          OR: [
-            { paidBy: userWallet },
-            { members: { some: { userId: user.id } } }
-          ],
-          status: { not: 'SETTLED' }
-        },
-        include: {
-          group: true,
-          members: {
-            include: { user: true }
-          }
-        }
-      })
-
+      // Use the allGroupSplits we already fetched for optimal settlements
       // Calculate optimal transactions per group
       const groupSplitsMap = new Map<string, any[]>()
-      for (const split of userSplits) {
+      for (const split of allGroupSplits) {
         if (!groupSplitsMap.has(split.groupId)) {
           groupSplitsMap.set(split.groupId, [])
         }
@@ -591,19 +652,18 @@ class DatabaseService {
         .map(group => {
           const groupSplits = groupSplitsMap.get(group.groupId) || []
           const settlement = calculateGroupSettlement(groupSplits)
-          
+
           return {
             ...group,
             netAmount: group.amountOwedToUser - group.amountOwed,
-            optimalTransactions: settlement.transactions.filter(t => 
+            optimalTransactions: settlement.transactions.filter(t =>
               t.from === userWallet || t.to === userWallet
             )
           }
         })
 
       // Calculate global optimal transactions across all groups
-      const allSplits = userSplits
-      const globalSettlement = calculateGroupSettlement(allSplits)
+      const globalSettlement = calculateGroupSettlement(allGroupSplits)
 
       return {
         userWallet,
@@ -611,19 +671,19 @@ class DatabaseService {
         totalOwedToUser,
         netBalance: totalOwedToUser - totalOwed,
         pendingGroups,
-        globalOptimalTransactions: globalSettlement.transactions.filter(t => 
+        globalOptimalTransactions: globalSettlement.transactions.filter(t =>
           t.from === userWallet || t.to === userWallet
         )
       }
     } catch (error) {
       console.error('❌ Error calculating user dues:', error)
-      return { 
+      return {
         userWallet,
-        totalOwed: 0, 
-        totalOwedToUser: 0, 
-        netBalance: 0, 
-        pendingGroups: [], 
-        globalOptimalTransactions: [] 
+        totalOwed: 0,
+        totalOwedToUser: 0,
+        netBalance: 0,
+        pendingGroups: [],
+        globalOptimalTransactions: []
       }
     }
   }

@@ -151,6 +151,17 @@ app.post('/api/splits', async (req, res) => {
   }
 })
 
+app.get('/api/splits/group/:groupId', async (req, res) => {
+  try {
+    const { groupId } = req.params
+    const splits = await databaseService.getGroupSplits(groupId)
+    res.json({ success: true, data: splits })
+  } catch (error: any) {
+    console.error('❌ Error fetching group splits:', error)
+    res.status(500).json({ success: false, error: error.message })
+  }
+})
+
 // Dues Routes
 app.get('/api/dues/:walletAddress', async (req, res) => {
   try {

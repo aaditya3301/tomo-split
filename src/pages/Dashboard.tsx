@@ -34,7 +34,7 @@ interface Group {
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate()
-  
+
   // Database hook for all data operations
   const {
     isLoading,
@@ -111,10 +111,10 @@ const Dashboard: React.FC = () => {
     const memberWallets = selectedFriends
       .map(f => f.resolvedAddress || f.walletId)
       .filter(Boolean)
-    
+
     if (memberWallets.length > 0) {
       console.log('🔄 Creating group:', { groupName, memberWallets })
-      
+
       const success = await createGroup(groupName, memberWallets)
       if (success) {
         console.log('✅ Group created successfully')
@@ -166,7 +166,7 @@ const Dashboard: React.FC = () => {
   // Show connection status if not connected
   if (!isConnected) {
     return (
-      <DashboardLayout 
+      <DashboardLayout
         title="Bill Splitting Dashboard"
         description="Connect your wallet to start splitting bills"
         groups={[]}
@@ -183,19 +183,29 @@ const Dashboard: React.FC = () => {
   }
 
   return (
-    <DashboardLayout 
+    <DashboardLayout
       title="Bill Splitting Dashboard"
       description="Split bills with friends and manage group expenses"
       groups={componentGroups}
       userDues={userDues}
-      // splits={splits}
+    // splits={splits}
     >
       {/* Database Connection Status */}
       {isConnected && !error && !isLoading && friends.length === 0 && groups.length === 0 && (
         <Alert className="mb-4" variant="default">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            🗄️ Connected to database. Start by adding friends to create groups and splits.
+          <AlertDescription className="flex items-center justify-between">
+            <span>🗄️ Connected to database. Start by adding friends to create groups and splits.</span>
+            <button
+              onClick={() => {
+                console.log('🔄 Manual refresh triggered')
+                refreshAll()
+              }}
+              disabled={isLoading}
+              className="ml-4 px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? '⏳' : '🔄'} Refresh
+            </button>
           </AlertDescription>
         </Alert>
       )}
@@ -206,8 +216,8 @@ const Dashboard: React.FC = () => {
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             Error: {error}
-            <button 
-              onClick={clearError} 
+            <button
+              onClick={clearError}
               className="ml-2 text-sm underline hover:no-underline"
             >
               Dismiss
@@ -243,14 +253,14 @@ const Dashboard: React.FC = () => {
               onClearError={clearError}
             />
           </div> */}
-          
+
           {/* Friends Section - Full Height */}
           <div className="flex-1 min-h-0">
             <FriendsSection
               friends={componentFriends}
               onFriendsUpdate={handleFriendsUpdate}
-              onGroupCreate={() => {
-                // Open group creation modal instead of directly creating
+              onGroupCreate={(selectedFriends) => {
+                // Open group creation modal with selected friends
                 setIsGroupModalOpen(true)
               }}
               onAddFriend={addFriend}
@@ -274,7 +284,7 @@ const Dashboard: React.FC = () => {
                 onClearError={clearError}
               />
             </div> */}
-            
+
             <details className="group">
               <summary className="flex items-center justify-between cursor-pointer list-none">
                 <span className="font-medium">Friends & Groups</span>
@@ -288,8 +298,8 @@ const Dashboard: React.FC = () => {
                 <FriendsSection
                   friends={componentFriends}
                   onFriendsUpdate={handleFriendsUpdate}
-                  onGroupCreate={() => {
-                    // Open group creation modal instead of directly creating
+                  onGroupCreate={(selectedFriends) => {
+                    // Open group creation modal with selected friends
                     setIsGroupModalOpen(true)
                   }}
                   onAddFriend={addFriend}
@@ -339,7 +349,7 @@ const Dashboard: React.FC = () => {
                       </div>
                     </div>
                     <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-primary/10 to-accent/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
-                    
+
                     {/* Tooltip on hover */}
                     <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-card border border-border rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
                       Click to create split • Members: {group.members.join(', ')}
@@ -384,9 +394,16 @@ const Dashboard: React.FC = () => {
       <GroupModal
         isOpen={isGroupModalOpen}
         onClose={() => setIsGroupModalOpen(false)}
-        friends={componentFriends.filter(f => f.isSelected)}
+        friends={componentFriends}
         onCreateGroup={handleCreateGroup}
       />
+      
+      {/* Debug: Show friends count */}
+      {isGroupModalOpen && (
+        <div style={{position: 'fixed', top: '10px', right: '10px', background: 'red', color: 'white', padding: '5px', zIndex: 9999}}>
+          Debug: {componentFriends.length} friends available
+        </div>
+      )}
     </DashboardLayout>
   )
 }

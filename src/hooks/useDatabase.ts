@@ -101,8 +101,18 @@ export const useDatabase = (): UseDatabaseReturn => {
       setError(null)
       
       const duesData = await apiService.getUserDues(address)
-      setUserDues(duesData)
-      console.log('✅ Dues refreshed from database:', duesData)
+      
+      // Force state update by creating a new object with timestamp
+      setUserDues(prevDues => {
+        const newDues = { 
+          ...duesData, 
+          lastUpdated: Date.now() // Force React to detect change
+        }
+        console.log('✅ Dues refreshed from database:', newDues)
+        console.log('🔄 Previous dues:', prevDues)
+        console.log('🔄 Dues changed:', JSON.stringify(prevDues) !== JSON.stringify(newDues))
+        return newDues
+      })
     } catch (err: any) {
       console.error('❌ Failed to refresh dues from database:', err)
       setError(`Database connection failed: ${err.message}. Please check your API server and database connection.`)
@@ -134,6 +144,30 @@ export const useDatabase = (): UseDatabaseReturn => {
       setFriends([])
       setGroups([])
       setUserDues(null)
+    }
+  }, [address, isConnected, refreshAll])
+
+  // Auto-refresh data every 15 seconds and when page becomes visible
+  useEffect(() => {
+    if (!address || !isConnected) return
+
+    const interval = setInterval(() => {
+      console.log('🔄 Auto-refreshing data...')
+      refreshAll()
+    }, 15000) // Refresh every 15 seconds (faster for testing)
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden && address && isConnected) {
+        console.log('🔄 Page became visible, refreshing data...')
+        refreshAll()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      clearInterval(interval)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
   }, [address, isConnected, refreshAll])
 
@@ -231,7 +265,16 @@ export const useDatabase = (): UseDatabaseReturn => {
       await apiService.createSplit(splitData)
       console.log('✅ Split created in database')
       
-      await Promise.all([refreshGroups(), refreshDues()]) // Refresh both groups and dues
+      // Force multiple refreshes to ensure UI updates
+      console.log('🔄 Refreshing data after split creation...')
+      await Promise.all([refreshGroups(), refreshDues()])
+      
+      // Wait a bit and refresh again to ensure data is updated
+      setTimeout(async () => {
+        console.log('🔄 Second refresh after split creation...')
+        await Promise.all([refreshGroups(), refreshDues()])
+      }, 1000)
+      
       console.log('✅ Split created successfully')
       return true
     } catch (err: any) {

@@ -79,6 +79,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               
               {/* Profile Dropdown */}
               <ProfileDropdown 
+                key={userDues?.lastUpdated || 'no-dues'}
                 groups={groups} 
                 userDues={userDues}
                 // splits={splits}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -42,12 +42,13 @@ const GroupExpense: React.FC = () => {
   const { groupId } = useParams<{ groupId: string }>()
   const navigate = useNavigate()
   const { address } = useAccount()
-  const { groups, friends, createSplit, refreshAll } = useDatabase()
+  const { groups, friends, createSplit, refreshAll, userDues } = useDatabase()
 
   const [group, setGroup] = useState<any>(null)
   const [groupMembers, setGroupMembers] = useState<any[]>([])
   const [expenses, setExpenses] = useState<any[]>([])
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false)
+  const [isLoadingExpenses, setIsLoadingExpenses] = useState(false)
   const [isAllExpensesOpen, setIsAllExpensesOpen] = useState(false)
   const [isCreatingExpense, setIsCreatingExpense] = useState(false)
   const [settlementData, setSettlementData] = useState<any>(null)
@@ -129,6 +130,55 @@ const GroupExpense: React.FC = () => {
       setIsLoadingGroup(false)
     }
   }, [groupId, groups, friends, address])
+
+  // Fetch expenses for the group
+  const fetchExpenses = useCallback(async () => {
+    if (!group?.id) return
+
+    setIsLoadingExpenses(true)
+    try {
+      console.log('🔄 Fetching expenses for group:', group.id)
+      const response = await fetch(`http://localhost:3001/api/splits/group/${group.id}`)
+      const result = await response.json()
+      
+      if (result.success) {
+        setExpenses(result.data)
+        console.log('✅ Expenses fetched:', result.data.length)
+      } else {
+        console.error('❌ Failed to fetch expenses:', result.error)
+      }
+    } catch (error) {
+      console.error('❌ Error fetching expenses:', error)
+    } finally {
+      setIsLoadingExpenses(false)
+    }
+  }, [group?.id])
+
+  // Fetch expenses when group changes
+  useEffect(() => {
+    if (group?.id) {
+      fetchExpenses()
+    }
+  }, [group?.id, fetchExpenses])
+
+  // Refresh data when component mounts and periodically
+  useEffect(() => {
+    const refreshData = async () => {
+      console.log('🔄 GroupExpense: Refreshing data...')
+      await refreshAll()
+      if (group?.id) {
+        await fetchExpenses()
+      }
+    }
+
+    // Initial refresh
+    refreshData()
+
+    // Refresh every 15 seconds while on this page
+    const interval = setInterval(refreshData, 15000)
+
+    return () => clearInterval(interval)
+  }, [refreshAll, fetchExpenses, group?.id])
 
   // Calculate settlement whenever expenses change
   useEffect(() => {
@@ -231,11 +281,13 @@ const GroupExpense: React.FC = () => {
 
       await createSplit(splitData)
       
-      // Add to local expenses for immediate UI update
-      setExpenses(prev => [splitData, ...prev])
-      
-      // Refresh data to get updated information
-      await refreshAll()
+      // Force refresh all data and expenses to get updated information from database
+      console.log('🔄 Refreshing all data after expense creation...')
+      await Promise.all([
+        refreshAll(),
+        fetchExpenses()
+      ])
+      console.log('✅ Data and expenses refreshed after expense creation')
       
       // Reset form
       setFormData({
@@ -507,7 +559,7 @@ const GroupExpense: React.FC = () => {
                     <div className="relative">
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-500 flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-300">
                         <span className="text-sm font-bold text-black">
-                          {member.name.charAt(0).toUpperCase()}
+                          {(member.name || 'U').charAt(0).toUpperCase()}
                         </span>
                       </div>
                       {member.isCurrentUser && (
@@ -618,7 +670,7 @@ const GroupExpense: React.FC = () => {
                               <div className="relative">
                                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-300">
                                   <span className="text-sm font-bold text-white">
-                                    {(fromMember?.name || transaction.from).charAt(0).toUpperCase()}
+                                    {(fromMember?.name || transaction.from || 'U').charAt(0).toUpperCase()}
                                   </span>
                                 </div>
                                 {fromMember?.isCurrentUser && (
@@ -646,7 +698,7 @@ const GroupExpense: React.FC = () => {
                               <div className="relative">
                                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-300">
                                   <span className="text-sm font-bold text-white">
-                                    {(toMember?.name || transaction.to).charAt(0).toUpperCase()}
+                                    {(toMember?.name || transaction.to || 'U').charAt(0).toUpperCase()}
                                   </span>
                                 </div>
                                 {toMember?.isCurrentUser && (
@@ -715,7 +767,7 @@ const GroupExpense: React.FC = () => {
                                 <div className="flex items-center space-x-2">
                                   <div className="w-8 h-8 rounded-full bg-black/30 flex items-center justify-center shadow-sm group-hover:shadow-md transition-all duration-300">
                                     <span className="text-sm font-bold text-white">
-                                      {(member?.name || person).charAt(0).toUpperCase()}
+                                      {(member?.name || person || 'U').charAt(0).toUpperCase()}
                                     </span>
                                   </div>
                                   <div>
@@ -800,7 +852,10 @@ const GroupExpense: React.FC = () => {
                               <div>
                                 <h4 className="font-medium">{expense.title}</h4>
                                 <p className="text-sm text-muted-foreground">
-                                  Paid by {expense.paidByName}
+                                  Paid by {expense.paidByName || 'Unknown'} 
+                                  <span className="text-xs text-muted-foreground/70 ml-1">
+                                    ({expense.paidBy ? `${expense.paidBy.slice(0, 6)}...${expense.paidBy.slice(-4)}` : 'Unknown'})
+                                  </span>
                                 </p>
                               </div>
                               <div className="text-right">
@@ -848,7 +903,10 @@ const GroupExpense: React.FC = () => {
                       <div>
                         <h4 className="font-medium">{expense.title}</h4>
                         <p className="text-sm text-muted-foreground">
-                          Paid by {expense.paidByName}
+                          Paid by {expense.paidByName || 'Unknown'}
+                          <span className="text-xs text-muted-foreground/70 ml-1">
+                            ({expense.paidBy ? `${expense.paidBy.slice(0, 6)}...${expense.paidBy.slice(-4)}` : 'Unknown'})
+                          </span>
                         </p>
                       </div>
                       <div className="text-right">

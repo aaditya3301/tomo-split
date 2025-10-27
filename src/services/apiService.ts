@@ -102,6 +102,10 @@ class ApiService {
     })
   }
 
+  async getGroupSplits(groupId: string) {
+    return this.request(`/splits/group/${groupId}`)
+  }
+
   // Dues Operations
   async getUserDues(walletAddress: string): Promise<UserDues> {
     return this.request(`/dues/${walletAddress}`)

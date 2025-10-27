@@ -32,25 +32,32 @@ export class DebtSettlementService {
    * @param shares - How the expense should be split among participants
    */
   addExpense(payer: string, totalAmount: number, shares: ExpenseShare[]): boolean {
+    console.log('💰 Adding expense:', { payer, totalAmount, shares })
+    
     // Validate that shares add up to total amount (with small tolerance for floating point)
     const totalShares = shares.reduce((sum, share) => sum + share.amount, 0)
     const tolerance = 0.02 // Increased tolerance for floating point precision issues
     
     if (Math.abs(totalShares - totalAmount) > tolerance) {
-      console.error(`Error: Shares (${totalShares}) do not add up to total amount (${totalAmount})!`)
+      console.error(`❌ Error: Shares (${totalShares}) do not add up to total amount (${totalAmount})!`)
       return false
     }
 
     // Subtract each person's share from their balance (they owe this amount)
     for (const share of shares) {
       const currentBalance = this.balances.get(share.person) || 0
-      this.balances.set(share.person, currentBalance - share.amount)
+      const newBalance = currentBalance - share.amount
+      this.balances.set(share.person, newBalance)
+      console.log(`📊 ${share.person}: ${currentBalance} - ${share.amount} = ${newBalance}`)
     }
 
     // Add the total amount to the payer's balance (they are owed this amount)
     const payerBalance = this.balances.get(payer) || 0
-    this.balances.set(payer, payerBalance + totalAmount)
+    const newPayerBalance = payerBalance + totalAmount
+    this.balances.set(payer, newPayerBalance)
+    console.log(`💳 ${payer} (payer): ${payerBalance} + ${totalAmount} = ${newPayerBalance}`)
 
+    console.log('📈 Current balances:', Object.fromEntries(this.balances))
     return true
   }
 
@@ -174,13 +181,31 @@ export function calculateGroupSettlement(splits: any[]): {
 
   // Add each split as an expense
   for (const split of splits) {
+    console.log('🔍 Processing split:', split)
+    
     const shares: ExpenseShare[] = split.members.map((member: any) => ({
-      person: member.name || member.walletId,
+      person: member.userName || member.name || member.userWallet || member.walletId || 'Unknown',
       amount: Number(member.amount)
     }))
 
+    // Find the payer in the members list to get consistent naming
+    const payerMember = split.members.find((member: any) => 
+      member.userWallet === split.paidBy || member.walletId === split.paidBy
+    )
+    const payer = payerMember ? 
+      (payerMember.userName || payerMember.name || payerMember.userWallet || payerMember.walletId) :
+      (split.paidByName || split.paidBy || 'Unknown')
+    
+    console.log('🔍 Split details:', {
+      payer,
+      totalAmount: Number(split.totalAmount),
+      shares,
+      paidBy: split.paidBy,
+      payerMember
+    })
+
     settlement.addExpense(
-      split.paidByName || split.paidBy,
+      payer,
       Number(split.totalAmount),
       shares
     )
