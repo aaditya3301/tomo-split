@@ -114,6 +114,11 @@ export interface UserDues {
 class DatabaseService {
   private client = prisma
 
+  // Helper to check if a string is a valid Ethereum address
+  private isEthereumAddress(address: string): boolean {
+    return /^0x[a-fA-F0-9]{40}$/.test(address)
+  }
+
   // User Operations
   async createOrUpdateUser(walletAddress: string, ensName?: string, displayName?: string) {
     try {
@@ -169,8 +174,36 @@ class DatabaseService {
       const user = await this.createOrUpdateUser(userWallet)
       
       // Determine friend's wallet address and ENS
-      const friendWalletAddress = friendData.resolvedAddress || friendData.friendAddress || friendData.walletId
+      let friendWalletAddress: string
+      
+      if (friendData.isENS) {
+        // For ENS names, we must have a resolved address
+        // If no resolved address is available, we can't create the user
+        friendWalletAddress = friendData.resolvedAddress || friendData.friendAddress || ''
+        
+        if (!friendWalletAddress || !this.isEthereumAddress(friendWalletAddress)) {
+          console.error('❌ Cannot add ENS friend without valid resolved address')
+          throw new Error(`Failed to resolve ENS name: ${friendData.walletId}. Please ensure the ENS name exists and try again.`)
+        }
+      } else {
+        // For regular addresses, validate that it's a proper Ethereum address
+        if (!this.isEthereumAddress(friendData.walletId)) {
+          console.error('❌ Invalid Ethereum address:', friendData.walletId)
+          throw new Error(`Invalid Ethereum address: ${friendData.walletId}`)
+        }
+        friendWalletAddress = friendData.walletId
+      }
+      
       const friendENSName = friendData.isENS ? friendData.walletId : (friendData.resolvedENS || friendData.friendENS)
+      
+      console.log('📝 Friend data details:', {
+        isENS: friendData.isENS,
+        walletId: friendData.walletId,
+        resolvedAddress: friendData.resolvedAddress,
+        friendAddress: friendData.friendAddress,
+        finalWalletAddress: friendWalletAddress,
+        finalENSName: friendENSName
+      })
       
       // Get or create the friend user
       const friend = await this.createOrUpdateUser(
@@ -280,11 +313,29 @@ class DatabaseService {
     try {
       console.log('🔄 Creating group:', { creatorWallet, name, memberWallets })
       
+      // Validate that we have at least one member
+      if (!memberWallets || memberWallets.length === 0) {
+        throw new Error('Cannot create group with no members')
+      }
+      
+      // Ensure all member wallets are valid Ethereum addresses
+      const validMemberWallets = memberWallets.filter(wallet => {
+        const isValid = this.isEthereumAddress(wallet)
+        if (!isValid) {
+          console.warn(`⚠️ Skipping invalid wallet address: ${wallet}`)
+        }
+        return isValid
+      })
+      
+      if (validMemberWallets.length === 0) {
+        throw new Error('No valid Ethereum addresses found in member wallets')
+      }
+      
       const creator = await this.createOrUpdateUser(creatorWallet)
 
       // Get all member users (ensure they exist in database)
       const memberUsers = await Promise.all(
-        memberWallets.map(async (wallet) => {
+        validMemberWallets.map(async (wallet) => {
           return await this.createOrUpdateUser(wallet)
         })
       )
@@ -296,6 +347,11 @@ class DatabaseService {
       // Check if creator is already in a group with any of these members
       const uniqueMembers = memberUsers.filter(u => u.id !== creator.id)
       console.log(`   🧭 Unique Members (excluding creator):`, uniqueMembers.map(u => ({ id: u.id, wallet: u.walletAddress })))
+
+      // If no unique members (creator is the only one), we still need to create the group
+      if (uniqueMembers.length === 0) {
+        console.warn('⚠️ Group has no additional members besides creator')
+      }
 
       // Create the group with creator and members
       const group = await this.client.group.create({

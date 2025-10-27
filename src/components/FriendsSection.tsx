@@ -134,8 +134,8 @@ const FriendsSection: React.FC<FriendsSectionProps> = ({
         setIsResolvingENS(true)
         try {
           const result = await getCachedENSResolution(inputValue)
-          if (result.error) {
-            setEnsError(result.error)
+          if (result.error || !result.address) {
+            setEnsError(result.error || 'Failed to resolve ENS name')
             setIsResolvingENS(false)
             return
           }
@@ -147,6 +147,12 @@ const FriendsSection: React.FC<FriendsSectionProps> = ({
           return
         }
         setIsResolvingENS(false)
+      }
+      
+      // CRITICAL: Don't proceed if we don't have a resolved address
+      if (!finalResolvedAddress) {
+        setEnsError('Cannot add ENS friend without resolved address')
+        return
       }
       
       const friendData = {
@@ -173,7 +179,7 @@ const FriendsSection: React.FC<FriendsSectionProps> = ({
           setIsAddFriendOpen(false)
           return // Exit early to avoid duplicate form clearing
         } else {
-          setEnsError('Failed to add friend to database')
+          setEnsError('Failed to add friend to database. Please check server logs.')
           return
         }
       } else {

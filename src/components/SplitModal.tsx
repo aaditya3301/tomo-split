@@ -66,6 +66,7 @@ const SplitModal: React.FC<SplitModalProps> = ({
       }))
       setMemberAmounts(updatedAmounts)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEqualSplit, totalAmount, memberAmounts.length])
 
   const handleMemberAmountChange = (memberName: string, amount: string) => {

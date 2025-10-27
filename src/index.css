@@ -238,6 +238,71 @@
   }
 }
 
+/* Wallet Connect Button Theme Override */
+w3m-button {
+  display: inline-block;
+}
+
+w3m-button::part(button) {
+  background: hsl(var(--muted)) !important;
+  color: hsl(var(--foreground)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: calc(var(--radius) - 2px) !important;
+  padding: 0.5rem 1rem !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
+}
+
+w3m-button:hover::part(button) {
+  background: hsl(var(--muted) / 0.8) !important;
+  border-color: hsl(var(--primary) / 0.5) !important;
+}
+
+w3m-button::part(button):focus {
+  outline: 2px solid hsl(var(--ring)) !important;
+  outline-offset: 2px !important;
+}
+
+/* Reown Modal Theme Override */
+reown-modal {
+  /* Darken the modal background */
+  background: hsl(var(--background)) !important;
+}
+
+reown-modal::part(overlay) {
+  background: rgba(0, 0, 0, 0.8) !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+reown-modal::part(content) {
+  background: hsl(var(--card)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Make modal buttons and elements visible */
+reown-modal button {
+  background: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+}
+
+reown-modal button:hover {
+  background: hsl(var(--primary) / 0.9) !important;
+}
+
+/* Mobile responsive improvements */
+@media (max-width: 768px) {
+  w3m-button {
+    max-width: 100%;
+  }
+  
+  w3m-button::part(button) {
+    padding: 0.4rem 0.8rem !important;
+    font-size: 0.875rem !important;
+  }
+}
+
 @keyframes marquee {
   0% {
     transform: translateX(0%);

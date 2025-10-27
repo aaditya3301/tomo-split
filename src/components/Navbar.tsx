@@ -32,29 +32,29 @@ const Navbar: React.FC = () => {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-border/20">
-      <div className="max-w-7xl mx-auto px-6 py-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
           <div 
-            className="text-2xl font-bold gradient-text cursor-pointer"
+            className="text-xl sm:text-2xl font-bold gradient-text cursor-pointer"
             onClick={() => navigate('/')}
           >
             TOMO-LABS
           </div>
 
           {/* Navigation Items */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             <Button
               variant="ghost"
               onClick={handleAboutUs}
-              className="text-foreground hover:text-primary transition-colors"
+              className="text-foreground hover:text-primary transition-colors hidden sm:flex"
             >
               About Us
             </Button>
             
             <Button
               onClick={handleTryNow}
-              className="bg-gradient-to-r from-primary to-accent text-primary-foreground hover:opacity-90 transition-opacity glow-primary"
+              className="bg-gradient-to-r from-primary to-accent text-primary-foreground hover:opacity-90 transition-opacity glow-primary text-sm sm:text-base px-3 sm:px-4"
             >
               {isConnected ? 'Dashboard' : 'Try Now'}
             </Button>

@@ -227,9 +227,9 @@ const Dashboard: React.FC = () => {
       )}
 
       {/* Main Content with Left-Aligned Friends/Groups */}
-      <div className="relative h-[calc(100vh-96px)] flex flex-col lg:flex-row">
+      <div className="relative min-h-[calc(100vh-96px)] flex flex-col lg:flex-row">
         {/* Fixed Left Panel - Friends Only */}
-        <div className="fixed left-0 top-24 w-80 h-[calc(100vh-96px)] p-4 bg-background/95 backdrop-blur-sm border-r border-border/20 overflow-hidden hidden lg:flex lg:flex-col">
+        <div className="fixed left-0 top-24 w-80 h-[calc(100vh-96px)] p-4 bg-background/95 backdrop-blur-sm border-r border-border/20 overflow-hidden hidden lg:flex lg:flex-col z-10">
           {/* Storage Status - COMMENTED OUT FOR NOW */}
           {/* <div className="mb-4 p-3 rounded-lg border border-border/20 bg-card/50">
             <StorageStatus
@@ -302,7 +302,7 @@ const Dashboard: React.FC = () => {
         {/* Main Dashboard Content - Right Side */}
         <div className="lg:ml-80 flex-1 h-full flex flex-col">
           {/* Active Groups Buttons */}
-          <div className="p-6 pb-4 border-b border-border/20">
+          <div className="p-4 sm:p-6 pb-4 border-b border-border/20">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-medium text-muted-foreground">Active Groups</h3>
               {groups.length > 0 && (
@@ -328,7 +328,7 @@ const Dashboard: React.FC = () => {
                     <div className="flex items-center space-x-2 sm:space-x-3">
                       <div className="flex items-center space-x-1 sm:space-x-2">
                         <div className="w-2 h-2 rounded-full bg-accent"></div>
-                        <span className="font-medium text-xs sm:text-sm">{group.name}</span>
+                        <span className="font-medium text-xs sm:text-sm truncate max-w-[150px] sm:max-w-none">{group.name}</span>
                       </div>
                       <div className="flex items-center space-x-1 text-xs text-muted-foreground">
                         <span>{group.members.length}</span>
@@ -351,28 +351,28 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* Welcome Content */}
-          <div className="flex-1 flex items-center justify-center p-6">
-            <div className="text-center space-y-6">
-              <h2 className="text-6xl font-bold gradient-text">Welcome!</h2>
-              <p className="text-xl text-muted-foreground max-w-md">
+          <div className="flex-1 flex items-center justify-center p-4 sm:p-6">
+            <div className="text-center space-y-4 sm:space-y-6 w-full max-w-4xl">
+              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold gradient-text">Welcome!</h2>
+              <p className="text-base sm:text-xl text-muted-foreground px-4">
                 Manage your friends using the left panel and access your groups via the buttons above.
               </p>
-              <div className="space-y-4 text-left max-w-md">
-                <div className="flex items-center space-x-3">
-                  <div className="w-2 h-2 rounded-full bg-accent"></div>
-                  <span>Add friends using wallet addresses or ENS names</span>
+              <div className="space-y-3 sm:space-y-4 text-left max-w-2xl mx-auto px-4">
+                <div className="flex items-start space-x-3">
+                  <div className="w-2 h-2 rounded-full bg-accent mt-1.5 flex-shrink-0"></div>
+                  <span className="text-sm sm:text-base">Add friends using wallet addresses or ENS names</span>
                 </div>
-                <div className="flex items-center space-x-3">
-                  <div className="w-2 h-2 rounded-full bg-accent"></div>
-                  <span>Select friends to form groups</span>
+                <div className="flex items-start space-x-3">
+                  <div className="w-2 h-2 rounded-full bg-accent mt-1.5 flex-shrink-0"></div>
+                  <span className="text-sm sm:text-base">Select friends to form groups</span>
                 </div>
-                <div className="flex items-center space-x-3">
-                  <div className="w-2 h-2 rounded-full bg-accent"></div>
-                  <span>Click group buttons above to create bill splits</span>
+                <div className="flex items-start space-x-3">
+                  <div className="w-2 h-2 rounded-full bg-accent mt-1.5 flex-shrink-0"></div>
+                  <span className="text-sm sm:text-base">Click group buttons above to create bill splits</span>
                 </div>
-                <div className="flex items-center space-x-3">
-                  <div className="w-2 h-2 rounded-full bg-accent"></div>
-                  <span>Enjoy seamless bill splitting with friends</span>
+                <div className="flex items-start space-x-3">
+                  <div className="w-2 h-2 rounded-full bg-accent mt-1.5 flex-shrink-0"></div>
+                  <span className="text-sm sm:text-base">Enjoy seamless bill splitting with friends</span>
                 </div>
               </div>
             </div>

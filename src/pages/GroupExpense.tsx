@@ -52,6 +52,7 @@ const GroupExpense: React.FC = () => {
   const [isCreatingExpense, setIsCreatingExpense] = useState(false)
   const [settlementData, setSettlementData] = useState<any>(null)
   const [totalExpenses, setTotalExpenses] = useState(0)
+  const [isLoadingGroup, setIsLoadingGroup] = useState(true)
 
   const [formData, setFormData] = useState<ExpenseFormData>({
     title: '',
@@ -68,9 +69,14 @@ const GroupExpense: React.FC = () => {
 
   // Find the group and load its data
   useEffect(() => {
+    setIsLoadingGroup(true)
+    
     if (groupId && groups.length > 0) {
       const foundGroup = groups.find(g => g.id === groupId)
+      console.log('🔍 Looking for group:', { groupId, groupsCount: groups.length, foundGroup })
+      
       if (foundGroup) {
+        console.log('✅ Group found:', foundGroup)
         setGroup(foundGroup)
         
         // Map group members from wallet addresses to friend data
@@ -111,7 +117,16 @@ const GroupExpense: React.FC = () => {
             return updatedFormData
           })
         }
+        setIsLoadingGroup(false)
+      } else {
+        console.warn('❌ Group not found:', groupId)
+        setIsLoadingGroup(false)
       }
+    } else if (groupId) {
+      // If we have a groupId but groups haven't loaded yet, keep loading state
+      console.log('⏳ Waiting for groups to load...')
+    } else {
+      setIsLoadingGroup(false)
     }
   }, [groupId, groups, friends, address])
 
@@ -248,17 +263,38 @@ const GroupExpense: React.FC = () => {
                      (formData.isEqualSplit || 
                       Math.abs(totalCustomAmount - (parseFloat(formData.amount) || 0)) < 0.01)
 
-  if (!group) {
+  // Show loading state while fetching group
+  if (isLoadingGroup) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <p className="text-muted-foreground">Group not found</p>
+      <div className="flex items-center justify-center h-screen bg-background">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="text-muted-foreground">Loading group...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Show error if group not found after loading
+  if (!group && !isLoadingGroup) {
+    console.error('❌ Group not found after loading:', { groupId, groups })
+    return (
+      <div className="flex items-center justify-center h-screen bg-background">
+        <div className="text-center space-y-4">
+          <AlertCircle className="h-16 w-16 text-muted-foreground mx-auto" />
+          <h2 className="text-2xl font-bold">Group Not Found</h2>
+          <p className="text-muted-foreground">The group you're looking for doesn't exist or you don't have access to it.</p>
           <Button onClick={() => navigate('/dashboard')} className="mt-4">
             Back to Dashboard
           </Button>
         </div>
       </div>
     )
+  }
+
+  // Show error if no group is set (safety check)
+  if (!group) {
+    return null
   }
 
   return (
