@@ -1,0 +1,204 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("VITE_DATABASE_URL")
+}
+
+// User model - represents connected wallet users
+model User {
+  id            String   @id @default(cuid())
+  walletAddress String   @unique
+  ensName       String?  @unique
+  displayName   String?
+  isENSResolved Boolean  @default(false)
+  lastSeen      DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  friendsAsUser    Friend[] @relation("UserFriends")
+  friendsAsFriend  Friend[] @relation("FriendUser")
+  groupMemberships GroupMember[]
+  groupsCreated    Group[] @relation("GroupCreator")
+  splitsCreated    Split[] @relation("SplitCreator")
+  splitMembers     SplitMember[]
+  paymentsFrom     Payment[] @relation("PaymentFrom")
+  paymentsTo       Payment[] @relation("PaymentTo")
+  
+  @@map("users")
+}
+
+// Friend model - represents friendship relationships
+model Friend {
+  id            String   @id @default(cuid())
+  userId        String   // The user who added this friend
+  friendId      String   // The friend being added
+  nickname      String?  // Optional nickname for the friend
+  friendAddress String   // Store the friend's wallet address
+  friendENS     String?  // Store the friend's ENS name if available
+  isENS         Boolean  @default(false) // Whether the friend was added via ENS
+  createdAt     DateTime @default(now())
+
+  // Relations
+  user   User @relation("UserFriends", fields: [userId], references: [id], onDelete: Cascade)
+  friend User @relation("FriendUser", fields: [friendId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, friendId])
+  @@map("friends")
+}
+
+// Group model - represents expense sharing groups
+model Group {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  creatorId   String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  creator User @relation("GroupCreator", fields: [creatorId], references: [id])
+  members GroupMember[]
+  splits  Split[]
+
+  @@map("groups")
+}
+
+// GroupMember model - represents group membership
+model GroupMember {
+  id       String @id @default(cuid())
+  groupId  String
+  userId   String
+  role     GroupRole @default(MEMBER)
+  joinedAt DateTime  @default(now())
+
+  // Relations
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userId])
+  @@map("group_members")
+}
+
+// Split model - represents bill splits
+model Split {
+  id          String      @id @default(cuid())
+  groupId     String
+  creatorId   String
+  title       String
+  description String?
+  totalAmount Decimal     @db.Decimal(10, 2)
+  currency    String      @default("USD")
+  splitType   SplitType   @default(EQUAL)
+  status      SplitStatus @default(PENDING)
+  paidBy      String?     // User who paid the bill
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  // Optional IPFS storage
+  ipfsHash    String?     // For Filecoin storage integration
+
+  // Relations
+  group       Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  creator     User  @relation("SplitCreator", fields: [creatorId], references: [id])
+  members     SplitMember[]
+  payments    Payment[]
+
+  @@map("splits")
+}
+
+// SplitMember model - represents individual member amounts in a split
+model SplitMember {
+  id         String  @id @default(cuid())
+  splitId    String
+  userId     String
+  amount     Decimal @db.Decimal(10, 2)
+  isPaid     Boolean @default(false)
+  paidAt     DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  split Split @relation(fields: [splitId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([splitId, userId])
+  @@map("split_members")
+}
+
+// Payment model - represents payment transactions
+model Payment {
+  id            String        @id @default(cuid())
+  splitId       String
+  fromUserId    String        // User making the payment
+  toUserId      String?       // User receiving payment (optional for group payments)
+  amount        Decimal       @db.Decimal(10, 2)
+  currency      String        @default("USD")
+  method        PaymentMethod @default(MANUAL)
+  status        PaymentStatus @default(PENDING)
+  transactionId String?       // External transaction ID (crypto/payment gateway)
+  description   String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // Relations
+  split    Split @relation(fields: [splitId], references: [id], onDelete: Cascade)
+  fromUser User  @relation("PaymentFrom", fields: [fromUserId], references: [id])
+  toUser   User? @relation("PaymentTo", fields: [toUserId], references: [id])
+
+  @@map("payments")
+}
+
+// ENS Cache model - for caching ENS resolution results
+model ENSCache {
+  id           String   @id @default(cuid())
+  ensName      String   @unique
+  walletAddress String?
+  isValid      Boolean  @default(true)
+  lastResolved DateTime @default(now())
+  expiresAt    DateTime
+
+  @@map("ens_cache")
+}
+
+// Enums
+enum GroupRole {
+  ADMIN
+  MEMBER
+}
+
+enum SplitType {
+  EQUAL
+  CUSTOM
+  PERCENTAGE
+}
+
+enum SplitStatus {
+  PENDING
+  ACTIVE
+  SETTLED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  MANUAL
+  CRYPTO
+  BANK_TRANSFER
+  PAYPAL
+  VENMO
+  CASHAPP
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
