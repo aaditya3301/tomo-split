@@ -2,6 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import { databaseService } from '../services/databaseService'
+// import { getPaymentEventListener } from '../services/paymentEventListener'
 
 // Load environment variables first
 dotenv.config()
@@ -17,8 +18,22 @@ console.log('🔗 Database URL:', process.env.DATABASE_URL ? '✅ Configured' : 
 const app = express()
 const PORT = process.env.PORT || 3001
 
+// CORS Configuration
+const corsOptions = {
+  origin: [
+    'http://localhost:5173', 
+    'http://localhost:5174', 
+    'http://localhost:3002',
+    'http://localhost:3000',
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:3002'
+  ],
+  credentials: true,
+  optionsSuccessStatus: 200
+}
+
 // Middleware
-app.use(cors())
+app.use(cors(corsOptions))
 app.use(express.json())
 
 // Health check with database test
@@ -225,6 +240,28 @@ async function startServer() {
       console.log(`🚀 API Server running on http://localhost:${PORT}`)
       console.log(`📊 Database: Connected to NeonDB`)
       console.log(`🔗 Health check: http://localhost:${PORT}/api/health`)
+      
+      // Start payment event listener if enabled
+      // TODO: Uncomment when contracts are deployed
+      /*
+      if (process.env.VITE_ENABLE_EVENT_LISTENER === 'true') {
+        console.log('\n🎧 Starting blockchain event listener...')
+        try {
+          const eventListener = getPaymentEventListener(process.env.VITE_RPC_URL)
+          eventListener.startListening().then(() => {
+            console.log('✅ Event listener active - monitoring for payment events')
+          }).catch((error) => {
+            console.error('❌ Failed to start event listener:', error)
+            console.log('⚠️  Server will continue without event listening')
+          })
+        } catch (error) {
+          console.error('❌ Event listener initialization failed:', error)
+        }
+      } else {
+        console.log('ℹ️  Event listener disabled (set VITE_ENABLE_EVENT_LISTENER=true to enable)')
+      }
+      */
+      console.log('ℹ️  Event listener will be available after contract deployment')
     })
     
   } catch (error) {

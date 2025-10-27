@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { useToast } from '@/hooks/use-toast'
 import { 
   ArrowLeft, 
   Plus, 
@@ -24,11 +25,13 @@ import {
   TrendingUp,
   ArrowRightLeft,
   Target,
-  AlertCircle
+  AlertCircle,
+  Wallet
 } from 'lucide-react'
 import { useDatabase } from '@/hooks/useDatabase'
 import { useAccount } from 'wagmi'
 import { calculateGroupSettlement } from '@/services/debtSettlementService'
+import PaymentModal from '@/components/PaymentModal'
 
 interface ExpenseFormData {
   title: string
@@ -42,7 +45,8 @@ const GroupExpense: React.FC = () => {
   const { groupId } = useParams<{ groupId: string }>()
   const navigate = useNavigate()
   const { address } = useAccount()
-  const { groups, friends, createSplit, refreshAll, userDues } = useDatabase()
+  const { groups, friends, createSplit, refreshAll, userDues, recordPayment } = useDatabase()
+  const { toast } = useToast()
 
   const [group, setGroup] = useState<any>(null)
   const [groupMembers, setGroupMembers] = useState<any[]>([])
@@ -54,6 +58,8 @@ const GroupExpense: React.FC = () => {
   const [settlementData, setSettlementData] = useState<any>(null)
   const [totalExpenses, setTotalExpenses] = useState(0)
   const [isLoadingGroup, setIsLoadingGroup] = useState(true)
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
+  const [selectedTransaction, setSelectedTransaction] = useState<any>(null)
 
   const [formData, setFormData] = useState<ExpenseFormData>({
     title: '',
@@ -314,6 +320,85 @@ const GroupExpense: React.FC = () => {
                      formData.paidBy && 
                      (formData.isEqualSplit || 
                       Math.abs(totalCustomAmount - (parseFloat(formData.amount) || 0)) < 0.01)
+
+  // Handle payment button click
+  const handlePayClick = (transaction: any) => {
+    const fromMember = groupMembers.find(m => 
+      m.wallet === transaction.from || m.name === transaction.from
+    )
+    const toMember = groupMembers.find(m => 
+      m.wallet === transaction.to || m.name === transaction.to
+    )
+
+    setSelectedTransaction({
+      from: fromMember?.wallet || transaction.from,
+      to: toMember?.wallet || transaction.to,
+      amount: transaction.amount,
+      fromName: fromMember?.name || transaction.from,
+      toName: toMember?.name || transaction.to,
+      description: `Payment for ${group.name}`
+    })
+    setIsPaymentModalOpen(true)
+  }
+
+  // Handle successful payment
+  const handlePaymentSuccess = async (transactionId: string) => {
+    console.log('💰 Payment successful, recording in database:', transactionId)
+    
+    // Record payment in the database
+    try {
+      if (selectedTransaction) {
+        // Find the split(s) related to this transaction
+        // For simplicity, we'll record it against the most recent unpaid split
+        const unpaidExpense = expenses.find(exp => 
+          !exp.members.find((m: any) => m.id === address)?.isPaid
+        )
+        
+        if (unpaidExpense) {
+          await recordPayment(
+            unpaidExpense.id,
+            selectedTransaction.amount,
+            'CRYPTO',
+            transactionId
+          )
+          
+          // Show success toast
+          toast({
+            title: "Payment Successful! 🎉",
+            description: `$${selectedTransaction.amount.toFixed(2)} paid to ${selectedTransaction.toName}`,
+            duration: 5000,
+          })
+          
+          // Refresh data to show updated status
+          await refreshAll()
+          
+          // Wait a bit for the database to update
+          setTimeout(async () => {
+            await fetchExpenses()
+            // Recalculate settlement after payment
+            if (expenses.length > 0) {
+              const settlement = calculateGroupSettlement(expenses)
+              setSettlementData(settlement)
+            }
+          }, 1000)
+          
+          console.log('✅ Payment recorded successfully')
+          
+          // Close the payment modal
+          setIsPaymentModalOpen(false)
+          setSelectedTransaction(null)
+        }
+      }
+    } catch (error) {
+      console.error('❌ Failed to record payment:', error)
+      toast({
+        title: "Payment Recording Failed",
+        description: "Payment was sent but couldn't be recorded in the database.",
+        variant: "destructive",
+        duration: 5000,
+      })
+    }
+  }
 
   // Show loading state while fetching group
   if (isLoadingGroup) {
@@ -662,68 +747,84 @@ const GroupExpense: React.FC = () => {
                       return (
                         <div 
                           key={index} 
-                          className="group flex items-center justify-between p-4 rounded-lg bg-gradient-to-r from-gray-800 to-black border border-yellow-400 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-102"
+                          className="group p-4 rounded-lg bg-gradient-to-r from-gray-800 to-black border border-yellow-400 shadow-lg hover:shadow-xl transition-all duration-300"
                           style={{ animationDelay: `${index * 100}ms` }}
                         >
-                          <div className="flex items-center space-x-4">
-                            <div className="flex items-center space-x-2">
-                              <div className="relative">
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-300">
-                                  <span className="text-sm font-bold text-white">
-                                    {(fromMember?.name || transaction.from || 'U').charAt(0).toUpperCase()}
-                                  </span>
-                                </div>
-                                {fromMember?.isCurrentUser && (
-                                  <div className="absolute -top-1 -right-1 w-5 h-5 bg-black rounded-full flex items-center justify-center shadow-sm border border-yellow-400">
-                                    <span className="text-xs font-bold text-yellow-400">YOU</span>
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center space-x-4">
+                              <div className="flex items-center space-x-2">
+                                <div className="relative">
+                                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-300">
+                                    <span className="text-sm font-bold text-white">
+                                      {(fromMember?.name || transaction.from || 'U').charAt(0).toUpperCase()}
+                                    </span>
                                   </div>
-                                )}
+                                  {fromMember?.isCurrentUser && (
+                                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-black rounded-full flex items-center justify-center shadow-sm border border-yellow-400">
+                                      <span className="text-xs font-bold text-yellow-400">YOU</span>
+                                    </div>
+                                  )}
+                                </div>
+                                <div>
+                                  <span className="font-bold text-white text-sm group-hover:text-yellow-400 transition-colors duration-300">
+                                    {fromMember?.name || transaction.from}
+                                  </span>
+                                  <p className="text-xs text-gray-400">Pays</p>
+                                </div>
                               </div>
-                              <div>
-                                <span className="font-bold text-white text-sm group-hover:text-yellow-400 transition-colors duration-300">
-                                  {fromMember?.name || transaction.from}
-                                </span>
-                                <p className="text-xs text-gray-400">Pays</p>
+                              
+                              <div className="flex items-center space-x-2">
+                                <ArrowRightLeft className="h-4 w-4 text-yellow-400" />
+                                <div className="px-2 py-1 bg-yellow-400/20 rounded border border-yellow-400/50">
+                                  <span className="text-xs font-semibold text-yellow-400">TRANSFER</span>
+                                </div>
+                              </div>
+                              
+                              <div className="flex items-center space-x-2">
+                                <div className="relative">
+                                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-300">
+                                    <span className="text-sm font-bold text-white">
+                                      {(toMember?.name || transaction.to || 'U').charAt(0).toUpperCase()}
+                                    </span>
+                                  </div>
+                                  {toMember?.isCurrentUser && (
+                                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-black rounded-full flex items-center justify-center shadow-sm border border-yellow-400">
+                                      <span className="text-xs font-bold text-yellow-400">YOU</span>
+                                    </div>
+                                  )}
+                                </div>
+                                <div>
+                                  <span className="font-bold text-white text-sm group-hover:text-yellow-400 transition-colors duration-300">
+                                    {toMember?.name || transaction.to}
+                                  </span>
+                                  <p className="text-xs text-gray-400">Receives</p>
+                                </div>
                               </div>
                             </div>
                             
-                            <div className="flex items-center space-x-2">
-                              <ArrowRightLeft className="h-4 w-4 text-yellow-400" />
-                              <div className="px-2 py-1 bg-yellow-400/20 rounded border border-yellow-400/50">
-                                <span className="text-xs font-semibold text-yellow-400">TRANSFER</span>
-                              </div>
-                            </div>
-                            
-                            <div className="flex items-center space-x-2">
-                              <div className="relative">
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-300">
-                                  <span className="text-sm font-bold text-white">
-                                    {(toMember?.name || transaction.to || 'U').charAt(0).toUpperCase()}
-                                  </span>
-                                </div>
-                                {toMember?.isCurrentUser && (
-                                  <div className="absolute -top-1 -right-1 w-5 h-5 bg-black rounded-full flex items-center justify-center shadow-sm border border-yellow-400">
-                                    <span className="text-xs font-bold text-yellow-400">YOU</span>
-                                  </div>
-                                )}
-                              </div>
-                              <div>
-                                <span className="font-bold text-white text-sm group-hover:text-yellow-400 transition-colors duration-300">
-                                  {toMember?.name || transaction.to}
-                                </span>
-                                <p className="text-xs text-gray-400">Receives</p>
-                              </div>
+                            <div className="text-right">
+                              <p className="text-xl font-black text-yellow-400 mb-1">
+                                ${transaction.amount.toFixed(2)}
+                              </p>
+                              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">
+                                Payment Required
+                              </p>
                             </div>
                           </div>
                           
-                          <div className="text-right">
-                            <p className="text-xl font-black text-yellow-400 mb-1">
-                              ${transaction.amount.toFixed(2)}
-                            </p>
-                            <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">
-                              Payment Required
-                            </p>
-                          </div>
+                          {/* Pay Button - Only show if current user is the payer */}
+                          {fromMember?.isCurrentUser && (
+                            <div className="flex justify-end">
+                              <Button
+                                onClick={() => handlePayClick(transaction)}
+                                className="bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-semibold shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105"
+                                size="sm"
+                              >
+                                <Wallet className="h-4 w-4 mr-2" />
+                                Pay ${transaction.amount.toFixed(2)}
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       )
                     })}
@@ -936,6 +1037,28 @@ const GroupExpense: React.FC = () => {
           </Card>
         </div>
       </main>
+
+      {/* Payment Modal */}
+      {selectedTransaction && (
+        <PaymentModal
+          isOpen={isPaymentModalOpen}
+          onClose={() => {
+            setIsPaymentModalOpen(false)
+            setSelectedTransaction(null)
+          }}
+          transaction={{
+            from: selectedTransaction.from,
+            to: selectedTransaction.to,
+            amount: selectedTransaction.amount,
+            description: selectedTransaction.description
+          }}
+          groupId={groupId || ''}
+          groupName={group?.name || ''}
+          fromMemberName={selectedTransaction.fromName}
+          toMemberName={selectedTransaction.toName}
+          onPaymentSuccess={handlePaymentSuccess}
+        />
+      )}
     </div>
   )
 }

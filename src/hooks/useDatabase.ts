@@ -18,7 +18,7 @@ interface UseDatabaseReturn {
   removeFriend: (friendId: string) => Promise<boolean>
   createGroup: (name: string, memberWallets: string[]) => Promise<boolean>
   createSplit: (splitData: SplitData) => Promise<boolean>
-  recordPayment: (splitId: string, amount: number, method?: string) => Promise<boolean>
+  recordPayment: (splitId: string, amount: number, method?: string, transactionId?: string) => Promise<boolean>
   
   // Refresh functions
   refreshFriends: () => Promise<void>
@@ -289,7 +289,8 @@ export const useDatabase = (): UseDatabaseReturn => {
   const recordPayment = useCallback(async (
     splitId: string, 
     amount: number, 
-    method: string = 'MANUAL'
+    method: string = 'MANUAL',
+    transactionId?: string
   ): Promise<boolean> => {
     if (!address) {
       setError('Wallet not connected')
@@ -300,7 +301,7 @@ export const useDatabase = (): UseDatabaseReturn => {
     setError(null)
 
     try {
-      await apiService.recordPayment(splitId, address, amount, method)
+      await apiService.recordPayment(splitId, address, amount, method, transactionId)
       await refreshDues() // Refresh dues after payment
       console.log('✅ Payment recorded successfully')
       return true
