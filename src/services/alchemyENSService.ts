@@ -10,34 +10,32 @@ class AlchemyENSService {
   private readonly apiKey: string
 
   constructor() {
-    // Get Alchemy API key from environment with fallback to known key
+    // Get Alchemy API key from environment
     const envKey = import.meta.env.VITE_ALCHEMY_API_KEY
     
-    // Comprehensive environment debugging
-    console.log('🔍 Full Environment Debug:')
-    console.log('- import.meta.env.VITE_ALCHEMY_API_KEY:', envKey)
-    console.log('- Type:', typeof envKey)
-    console.log('- Length:', envKey?.length || 0)
-    console.log('- All VITE_ vars:', Object.keys(import.meta.env).filter(key => key.startsWith('VITE_')))
-    console.log('- All env keys:', Object.keys(import.meta.env))
+    // Development-only debug logging (removed in production)
+    if (import.meta.env.DEV) {
+      console.log('🔍 Alchemy ENS Service initialization')
+      console.log('- API Key exists:', !!envKey)
+      console.log('- API Key length:', envKey?.length || 0)
+    }
     
-    // Temporary: Use your known API key if env var fails
+    // SECURITY: Never use hardcoded fallback keys
     if (!envKey) {
-      console.warn('⚠️ Environment variable not loaded, using fallback')
-      this.apiKey = '50MEA29CwXWWZsSKgblya-mIcfFgT7zD' // Your API key from .env
+      console.error('❌ VITE_ALCHEMY_API_KEY not found in environment variables')
+      console.error('💡 Please add VITE_ALCHEMY_API_KEY to your .env file')
+      this.apiKey = ''
     } else {
-      console.log('✅ Environment variable loaded successfully')
       this.apiKey = envKey
     }
     
-    console.log('🔑 Final API Key length:', this.apiKey.length)
-    
     if (this.apiKey && this.apiKey.length > 10) {
-      console.log('✅ Alchemy API Key found, initializing Alchemy SDK...')
-      console.log('🔑 API Key (first 10 chars):', this.apiKey.substring(0, 10) + '...')
+      if (import.meta.env.DEV) {
+        console.log('✅ Alchemy API Key configured, initializing SDK...')
+      }
       this.initializeAlchemy()
     } else {
-      console.error('❌ No valid API key available')
+      console.error('❌ Invalid or missing Alchemy API key')
     }
   }
 

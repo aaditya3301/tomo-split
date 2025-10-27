@@ -35,17 +35,18 @@ class LighthouseService {
   constructor() {
     this.apiKey = import.meta.env.VITE_STORAGE_API_KEY || ''
     
-    console.log('🔧 Lighthouse Service Constructor')
-    console.log('📊 All VITE env vars:', Object.keys(import.meta.env).filter(key => key.startsWith('VITE_')))
-    console.log('🔑 VITE_STORAGE_API_KEY exists:', !!import.meta.env.VITE_STORAGE_API_KEY)
-    console.log('🔑 API Key length:', this.apiKey.length)
+    // Development-only debug logging
+    if (import.meta.env.DEV) {
+      console.log('� Lighthouse Service initialization')
+      console.log('🔑 Storage API Key exists:', !!this.apiKey)
+      console.log('🔑 API Key length:', this.apiKey.length)
+    }
     
     if (!this.apiKey) {
       console.error('❌ VITE_STORAGE_API_KEY not found in environment variables')
       console.error('💡 Make sure you have VITE_STORAGE_API_KEY in your .env file')
-    } else {
-      console.log('✅ Lighthouse API Key found, initializing storage service...')
-      console.log('🔑 API Key (first 10 chars):', this.apiKey.substring(0, 10) + '...')
+    } else if (import.meta.env.DEV) {
+      console.log('✅ Lighthouse API Key configured')
     }
   }
 

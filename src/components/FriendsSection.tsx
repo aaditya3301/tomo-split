@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -25,7 +25,7 @@ interface FriendsSectionProps {
 
 // Cache for ENS resolutions to avoid repeated API calls
 const ensCache = new Map<string, { address: string | null; error?: string; timestamp: number }>()
-const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes cache
+const CACHE_DURATION = 30 * 60 * 1000 // 30 minutes cache - increased from 5 minutes to prevent premature expiration
 
 // Function to clear expired cache entries
 const clearExpiredCache = () => {
@@ -48,6 +48,10 @@ const FriendsSection: React.FC<FriendsSectionProps> = ({
   const [ensError, setEnsError] = useState<string | null>(null)
   const [isResolvingENS, setIsResolvingENS] = useState(false)
   const [resolvedAddress, setResolvedAddress] = useState<string | null>(null)
+  const [resolutionTimestamp, setResolutionTimestamp] = useState<number>(0)
+  
+  // Use ref to store debounce timer
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   // Clean up expired cache entries periodically
   useEffect(() => {
@@ -92,33 +96,65 @@ const FriendsSection: React.FC<FriendsSectionProps> = ({
 
   const handleWalletIdChange = async (walletId: string) => {
     setNewFriend({ walletId })
+    
+    // Clear previous state when input changes
     setEnsError(null)
     setResolvedAddress(null)
+    setResolutionTimestamp(0)
+
+    // Clear any existing debounce timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current)
+      debounceTimerRef.current = null
+    }
 
     // Only resolve ENS names to show wallet address preview
     // Add minimum length check to avoid resolving incomplete names
     if (walletId.trim() && alchemyENSService.isENSName(walletId) && walletId.length >= 7) {
-      setIsResolvingENS(true)
-      
-      try {
-        const result = await getCachedENSResolution(walletId)
+      // Debounce ENS resolution by 800ms to avoid rapid API calls while typing
+      debounceTimerRef.current = setTimeout(async () => {
+        setIsResolvingENS(true)
+        const currentInput = walletId // Capture current input to prevent race conditions
         
-        if (result.error) {
-          setEnsError(result.error)
-          setResolvedAddress(null)
-        } else if (result.address) {
-          setResolvedAddress(result.address)
-          setEnsError(null) // Clear any previous errors
-          console.log(`✅ ENS ${walletId} resolved to: ${result.address}`)
+        try {
+          const result = await getCachedENSResolution(walletId)
+          
+          // Only update state if the input hasn't changed (prevent race conditions)
+          if (newFriend.walletId === currentInput || walletId === currentInput) {
+            if (result.error) {
+              setEnsError(result.error)
+              setResolvedAddress(null)
+              setResolutionTimestamp(0)
+            } else if (result.address) {
+              setResolvedAddress(result.address)
+              setEnsError(null) // Clear any previous errors
+              setResolutionTimestamp(Date.now()) // Mark when resolution succeeded
+              console.log(`✅ ENS ${walletId} resolved to: ${result.address}`)
+            }
+          }
+        } catch (error) {
+          // Only set error if input hasn't changed
+          if (newFriend.walletId === currentInput || walletId === currentInput) {
+            setEnsError('Failed to resolve ENS name')
+            setResolvedAddress(null)
+            setResolutionTimestamp(0)
+            console.error('ENS resolution error:', error)
+          }
+        } finally {
+          setIsResolvingENS(false)
         }
-      } catch (error) {
-        setEnsError('Failed to resolve ENS name')
-        console.error('ENS resolution error:', error)
-      } finally {
-        setIsResolvingENS(false)
-      }
+      }, 800) // 800ms debounce delay
     }
   }
+  
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current)
+      }
+    }
+  }, [])
 
   const handleAddFriend = async () => {
     if (!newFriend.walletId) return
@@ -130,7 +166,10 @@ const FriendsSection: React.FC<FriendsSectionProps> = ({
       // For ENS names: use cached resolution or resolve if not available
       let finalResolvedAddress = resolvedAddress
       
-      if (!finalResolvedAddress) {
+      // If we have a recent successful resolution (within last 10 seconds), use it
+      const isRecentResolution = resolvedAddress && resolutionTimestamp && (Date.now() - resolutionTimestamp) < 10000
+      
+      if (!finalResolvedAddress || !isRecentResolution) {
         setIsResolvingENS(true)
         try {
           const result = await getCachedENSResolution(inputValue)
@@ -140,7 +179,9 @@ const FriendsSection: React.FC<FriendsSectionProps> = ({
             return
           }
           finalResolvedAddress = result.address
+          setResolvedAddress(finalResolvedAddress)
           setEnsError(null) // Clear any previous errors when resolution succeeds
+          setResolutionTimestamp(Date.now())
         } catch (error) {
           setEnsError('Failed to resolve ENS name')
           setIsResolvingENS(false)
@@ -176,6 +217,7 @@ const FriendsSection: React.FC<FriendsSectionProps> = ({
           setNewFriend({ walletId: '' })
           setEnsError(null)
           setResolvedAddress(null)
+          setResolutionTimestamp(0)
           setIsAddFriendOpen(false)
           return // Exit early to avoid duplicate form clearing
         } else {
@@ -215,6 +257,7 @@ const FriendsSection: React.FC<FriendsSectionProps> = ({
             setNewFriend({ walletId: '' })
             setEnsError(null)
             setResolvedAddress(null)
+            setResolutionTimestamp(0)
             setIsAddFriendOpen(false)
             return // Exit early to avoid duplicate form clearing
           } else {
@@ -246,6 +289,7 @@ const FriendsSection: React.FC<FriendsSectionProps> = ({
             setNewFriend({ walletId: '' })
             setEnsError(null)
             setResolvedAddress(null)
+            setResolutionTimestamp(0)
             setIsAddFriendOpen(false)
             return // Exit early to avoid duplicate form clearing
           } else {
