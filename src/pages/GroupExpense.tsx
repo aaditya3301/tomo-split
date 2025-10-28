@@ -33,6 +33,7 @@ import { useDatabase } from '@/hooks/useDatabase'
 import { useAccount } from 'wagmi'
 import { calculateGroupSettlement } from '@/services/debtSettlementService'
 import PaymentModal from '@/components/PaymentModal'
+import { apiService } from '@/services/apiService'
 
 interface ExpenseFormData {
   title: string
@@ -145,15 +146,9 @@ const GroupExpense: React.FC = () => {
     setIsLoadingExpenses(true)
     try {
       console.log('🔄 Fetching expenses for group:', group.id)
-      const response = await fetch(`http://localhost:3001/api/splits/group/${group.id}`)
-      const result = await response.json()
-      
-      if (result.success) {
-        setExpenses(result.data)
-        console.log('✅ Expenses fetched:', result.data.length)
-      } else {
-        console.error('❌ Failed to fetch expenses:', result.error)
-      }
+      const data = await apiService.getGroupSplits(group.id)
+      setExpenses(data)
+      console.log('✅ Expenses fetched:', data.length)
     } catch (error) {
       console.error('❌ Error fetching expenses:', error)
     } finally {
