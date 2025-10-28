@@ -102,8 +102,8 @@ class ApiService {
     })
   }
 
-  async getGroupSplits(groupId: string) {
-    return this.request(`/splits/group/${groupId}`)
+  async getGroupSplits(groupId: string): Promise<SplitData[]> {
+    return this.request<SplitData[]>(`/splits/group/${groupId}`)
   }
 
   // Dues Operations
