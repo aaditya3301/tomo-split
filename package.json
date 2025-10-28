@@ -8,7 +8,7 @@
     "dev:frontend": "vite",
     "dev:api": "tsx src/api/server.ts",
     "dev:full": "concurrently \"npm run dev:frontend\" \"npm run dev:api\"",
-    "build": "tsc -b && vite build",
+    "build": "prisma generate && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "db:generate": "prisma generate",

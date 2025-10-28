@@ -1,30 +1,28 @@
 // Dues API endpoint for Vercel
-const { PrismaClient } = require('@prisma/client')
+import { PrismaClient } from '@prisma/client'
 
 // Initialize Prisma Client with environment variables
 let prisma
 
-// Ensure DATABASE_URL is available from VITE_DATABASE_URL if needed
-if (!process.env.DATABASE_URL && process.env.VITE_DATABASE_URL) {
-  process.env.DATABASE_URL = process.env.VITE_DATABASE_URL
-}
+// Use DATABASE_URL from environment (for Prisma) or VITE_DATABASE_URL (for Vite apps)
+const databaseUrl = process.env.DATABASE_URL || process.env.VITE_DATABASE_URL
 
 if (process.env.NODE_ENV === 'production') {
   prisma = new PrismaClient({
     datasources: {
       db: {
-        url: process.env.DATABASE_URL || process.env.VITE_DATABASE_URL,
-      },
-    },
+        url: databaseUrl
+      }
+    }
   })
 } else {
   if (!global.__prisma) {
     global.__prisma = new PrismaClient({
       datasources: {
         db: {
-          url: process.env.DATABASE_URL || process.env.VITE_DATABASE_URL,
-        },
-      },
+          url: databaseUrl
+        }
+      }
     })
   }
   prisma = global.__prisma
@@ -55,11 +53,36 @@ export default async function handler(req, res) {
 
     console.log(`🔄 GET /api/dues/${walletAddress}`)
     
-    // Get user dues - this is a complex query that calculates what user owes/is owed
-    // For now, return empty array until we can implement the full settlement logic
-    const dues = []
+    // Get user from database
+    const user = await prisma.user.findUnique({
+      where: { walletAddress: walletAddress.toLowerCase() }
+    })
+
+    if (!user) {
+      // Return empty dues structure for non-existent user
+      const emptyDues = {
+        userWallet: walletAddress,
+        totalOwed: 0,
+        totalOwedToUser: 0,
+        netBalance: 0,
+        pendingGroups: [],
+        globalOptimalTransactions: []
+      }
+      console.log(`✅ User not found, returning empty dues for ${walletAddress}`)
+      return res.json({ success: true, data: emptyDues })
+    }
+
+    // For now, return basic empty dues structure until we implement full settlement logic
+    const dues = {
+      userWallet: walletAddress,
+      totalOwed: 0,
+      totalOwedToUser: 0,
+      netBalance: 0,
+      pendingGroups: [],
+      globalOptimalTransactions: []
+    }
     
-    console.log(`✅ Retrieved ${dues.length} dues for ${walletAddress}`)
+    console.log(`✅ Retrieved dues for ${walletAddress}`)
     return res.json({ success: true, data: dues })
 
   } catch (error) {

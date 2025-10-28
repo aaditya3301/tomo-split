@@ -1,30 +1,28 @@
 // Users API endpoint for Vercel
-const { PrismaClient } = require('@prisma/client')
+import { PrismaClient } from '@prisma/client'
 
 // Initialize Prisma Client with environment variables
 let prisma
 
-// Ensure DATABASE_URL is available from VITE_DATABASE_URL if needed
-if (!process.env.DATABASE_URL && process.env.VITE_DATABASE_URL) {
-  process.env.DATABASE_URL = process.env.VITE_DATABASE_URL
-}
+// Use DATABASE_URL from environment (for Prisma) or VITE_DATABASE_URL (for Vite apps)
+const databaseUrl = process.env.DATABASE_URL || process.env.VITE_DATABASE_URL
 
 if (process.env.NODE_ENV === 'production') {
   prisma = new PrismaClient({
     datasources: {
       db: {
-        url: process.env.DATABASE_URL || process.env.VITE_DATABASE_URL,
-      },
-    },
+        url: databaseUrl
+      }
+    }
   })
 } else {
   if (!global.__prisma) {
     global.__prisma = new PrismaClient({
       datasources: {
         db: {
-          url: process.env.DATABASE_URL || process.env.VITE_DATABASE_URL,
-        },
-      },
+          url: databaseUrl
+        }
+      }
     })
   }
   prisma = global.__prisma
