@@ -254,6 +254,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               <UniswapV4Widget
                 targetAmount={transaction.amount}
                 recipient={transaction.to}
+                groupId={groupId}
+                splitId={`split-${Date.now()}`}
+                groupName={groupName}
+                receiverName={toMemberName}
                 onSwapComplete={handleSwapComplete}
                 onError={handleSwapError}
               />

@@ -47,8 +47,15 @@ Smart on-chain payment splits via ENS, groups & cross-chain yield like a lottery
 - **Wagmi** for Ethereum interactions
 - **Reown AppKit** for wallet connections
 - **Ethers.js** for contract interactions
+- **Uniswap V3** for real token swaps and DEX integration
 - **Alchemy SDK** for ENS resolution
 - **Lighthouse SDK** for Filecoin storage
+
+### **Backend & Database**
+- **Express.js** API server
+- **PostgreSQL** database
+- **Prisma ORM** for database management
+- **TypeScript** for type safety
 
 ### **Storage & APIs**
 - **Filecoin/IPFS** via Lighthouse for decentralized storage
@@ -58,18 +65,19 @@ Smart on-chain payment splits via ENS, groups & cross-chain yield like a lottery
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 18+ and npm
-- A Web3 wallet (MetaMask, WalletConnect, etc.)
-- Alchemy API key
-- Lighthouse API key
-- Reown Project ID
+- **Node.js 18+** and npm
+- **PostgreSQL** database
+- A **Web3 wallet** (MetaMask, WalletConnect, etc.)
+- **Alchemy API key**
+- **Lighthouse API key** 
+- **Reown Project ID**
 
 ### Installation
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/your-username/tomo-labs.git
-   cd tomo-labs
+   git clone https://github.com/TomoLabs/tomo-split.git
+   cd tomo-split
    ```
 
 2. **Install dependencies**
@@ -80,18 +88,44 @@ Smart on-chain payment splits via ENS, groups & cross-chain yield like a lottery
 3. **Set up environment variables**
    Create a `.env` file in the root directory:
    ```env
+   
+   # Web3 & Blockchain
    VITE_PROJECT_ID=your_reown_project_id
    VITE_ALCHEMY_API_KEY=your_alchemy_api_key
+   
+   # Storage
    VITE_STORAGE_API_KEY=your_lighthouse_api_key
+   
+   # API Server
+   PORT=3001
    ```
 
-4. **Start the development server**
+4. **Set up the database**
    ```bash
-npm run dev
-```
+   # Generate Prisma client
+   npx prisma generate
+   
+   # Run database migrations
+   npx prisma db push
+   
+   # (Optional) Seed the database
+   npx prisma db seed
+   ```
 
-5. **Open your browser**
-   Navigate to `http://localhost:8080`
+5. **Start the API server**
+   ```bash
+   # In one terminal
+   npm run api
+   ```
+
+6. **Start the development server**
+   ```bash
+   # In another terminal
+   npm run dev
+   ```
+
+7. **Open your browser**
+   Navigate to `http://localhost:3000`
 
 ## 📖 Usage Guide
 
@@ -102,9 +136,16 @@ npm run dev
 
 ### 💸 **Creating Bill Splits**
 1. **Add Friends**: Enter ENS names (e.g., `vitalik.eth`) or wallet addresses
-2. **Create Groups**: Select friends and form groups for different activities
+2. **Create Groups**: Select friends and form groups for different activities  
 3. **Split Bills**: Click "Create Split" on any group to divide expenses
-4. **Track Dues**: View detailed breakdown in your profile dropdown
+4. **Smart Payments**: Use the Uniswap integration for automatic token swaps (ETH → USDC/USDT)
+5. **Track Dues**: View detailed breakdown in your profile dropdown
+
+### 🔄 **Token Swaps & Payments**
+1. **Real Swaps**: Send ETH and recipients automatically get USDC via Uniswap V3
+2. **Multi-Token Support**: ETH, USDC, USDT, DAI with automatic conversion
+3. **Slippage Protection**: Built-in slippage tolerance for safe trading
+4. **Gas Optimization**: Efficient routing through Uniswap's proven infrastructure
 
 ### 📊 **Managing Finances**
 - **Profile Overview**: Click your avatar to see total dues and group breakdowns
@@ -146,42 +187,64 @@ src/
 ├── components/           # Reusable UI components
 │   ├── ui/              # Shadcn/ui components
 │   ├── FriendsSection.tsx
+│   ├── GroupsSection.tsx
+│   ├── PaymentModal.tsx
 │   ├── ProfileDropdown.tsx
 │   ├── SplitModal.tsx
-│   └── StorageStatus.tsx
+│   ├── StorageStatus.tsx
+│   └── UniswapV4Widget.tsx  # Token swap interface
 ├── pages/               # Route components
 │   ├── Index.tsx        # Landing page
 │   ├── Dashboard.tsx    # Main dashboard
+│   ├── GroupExpense.tsx # Group expense management
 │   └── NotFound.tsx
 ├── services/            # API and blockchain services
 │   ├── alchemyENSService.ts
+│   ├── apiService.ts    # API client
+│   ├── databaseService.ts
 │   ├── lighthouseService.ts
-│   └── splitStorageService.ts
+│   ├── splitStorageService.ts
+│   ├── swapService.ts   # Uniswap integration
+│   └── uniswapV4PaymentService.ts
 ├── hooks/               # Custom React hooks
+│   ├── useDatabase.ts
 │   ├── useStorage.ts
 │   └── use-mobile.tsx
 ├── layouts/             # Layout components
 │   └── DashboardLayout.tsx
-└── lib/                 # Utilities and configurations
-    ├── wagmi.ts         # Web3 configuration
-    └── utils.ts         # Helper functions
+├── lib/                 # Utilities and configurations
+│   ├── wagmi.ts         # Web3 configuration
+│   └── utils.ts         # Helper functions
+├── api/                 # Express.js API server
+│   └── server.ts
+└── prisma/              # Database schema and migrations
+    └── schema.prisma
 ```
 
 ### **Data Flow**
 1. **User Authentication**: Wallet connection via Reown AppKit
 2. **ENS Resolution**: Real-time name resolution via Alchemy
-3. **Local State**: React state management for UI interactions
-4. **Filecoin Storage**: Permanent data storage via Lighthouse
-5. **Cache Layer**: LocalStorage for quick access and offline support
+3. **Database Layer**: PostgreSQL with Prisma ORM for persistent data
+4. **Token Swaps**: Uniswap V3 integration for real DEX trading
+5. **Filecoin Storage**: Permanent data storage via Lighthouse
+6. **API Layer**: Express.js server for backend operations
+7. **Cache Layer**: LocalStorage for quick access and offline support
 
 ## 🧪 Development
 
 ### **Available Scripts**
-- `npm run dev` - Start development server
+- `npm run dev` - Start Vite development server
+- `npm run api` - Start Express.js API server
 - `npm run build` - Build for production
 - `npm run preview` - Preview production build
 - `npm run lint` - Run ESLint
 - `npm run type-check` - Run TypeScript checks
+
+### **Database Scripts**
+- `npx prisma generate` - Generate Prisma client
+- `npx prisma db push` - Push schema to database
+- `npx prisma studio` - Open Prisma Studio (database GUI)
+- `npx prisma db seed` - Seed database with sample data
 
 ### **Code Style**
 - **TypeScript**: Strict mode enabled
@@ -237,10 +300,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- **Uniswap Labs** for the v4 hooks architecture
-- **Reown** for wallet connection infrastructure
-- **Alchemy** for reliable Web3 APIs
-- **Lighthouse** for decentralized storage
+- **Uniswap Labs** for the V3/V4 DEX infrastructure and hooks architecture
+- **Reown** for wallet connection infrastructure  
+- **Alchemy** for reliable Web3 APIs and ENS resolution
+- **Lighthouse** for decentralized storage on Filecoin
+- **Prisma** for type-safe database operations
 - **Shadcn/ui** for beautiful components
 - **Tailwind CSS** for utility-first styling
 

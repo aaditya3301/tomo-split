@@ -15,10 +15,12 @@ import {
   CheckCircle2,
   AlertCircle,
   Sparkles,
-  Zap
+  Zap,
+  Wallet
 } from 'lucide-react'
 import { useAccount, useWalletClient } from 'wagmi'
 import { ethers } from 'ethers'
+import { getSwapService } from '@/services/swapService'
 
 interface TokenInfo {
   symbol: string
@@ -28,7 +30,7 @@ interface TokenInfo {
   logoUri?: string
 }
 
-// Arbitrum One tokens - 95% Cheaper Gas than Ethereum Mainnet!
+// Ethereum Mainnet tokens
 const TOKENS: TokenInfo[] = [
   {
     symbol: 'ETH',
@@ -40,21 +42,21 @@ const TOKENS: TokenInfo[] = [
   {
     symbol: 'USDC',
     name: 'USD Coin',
-    address: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831', // Arbitrum One USDC
+  address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', // USDC (Ethereum mainnet)
     decimals: 6,
     logoUri: 'https://cryptologos.cc/logos/usd-coin-usdc-logo.png'
   },
   {
     symbol: 'USDT',
     name: 'Tether USD',
-    address: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9', // Arbitrum One USDT
+    address: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // Ethereum USDT
     decimals: 6,
     logoUri: 'https://cryptologos.cc/logos/tether-usdt-logo.png'
   },
   {
     symbol: 'DAI',
     name: 'Dai Stablecoin',
-    address: '0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1', // Arbitrum One DAI
+    address: '0x6B175474E89094C44Da98b954EedeAC495271d0F', // Ethereum DAI
     decimals: 18,
     logoUri: 'https://cryptologos.cc/logos/multi-collateral-dai-dai-logo.png'
   }
@@ -63,6 +65,10 @@ const TOKENS: TokenInfo[] = [
 interface UniswapV4WidgetProps {
   targetAmount: number // Amount in USD that needs to be paid
   recipient?: string // Address to send payment to
+  groupId?: string // Group ID for payment tracking
+  splitId?: string // Split ID for payment tracking
+  groupName?: string // Group name for payment context
+  receiverName?: string // Receiver name for payment context
   onSwapComplete?: (txHash: string, amountOut: number) => void
   onError?: (error: string) => void
 }
@@ -70,6 +76,10 @@ interface UniswapV4WidgetProps {
 export const UniswapV4Widget: React.FC<UniswapV4WidgetProps> = ({
   targetAmount,
   recipient,
+  groupId,
+  splitId,
+  groupName,
+  receiverName,
   onSwapComplete,
   onError
 }) => {
@@ -224,63 +234,47 @@ export const UniswapV4Widget: React.FC<UniswapV4WidgetProps> = ({
 
     setIsSwapping(true)
     try {
-      console.log('🔄 Executing payment...')
+      console.log('🔄 Executing Uniswap V4 payment...')
       console.log('From:', fromToken.symbol, 'Amount:', fromAmount)
-      console.log('To:', recipient)
-      console.log('Network: Arbitrum One (L2 - Cheap Gas!)')
+      console.log('To:', toToken.symbol, 'Target Amount:', toAmount)
+      console.log('Recipient:', recipient)
+      console.log('Network: Ethereum Mainnet')
       
       const provider = new ethers.BrowserProvider(walletClient as any)
       const signer = await provider.getSigner()
 
-      let txHash: string
+      // Initialize swap service
+      const swapService = getSwapService()
+      await swapService.initialize(signer)
 
-      // Direct ETH transfer
-      if (fromToken.symbol === 'ETH') {
-        console.log('💸 Direct ETH transfer')
-        const tx = await signer.sendTransaction({
-          to: recipient,
-          value: ethers.parseEther(fromAmount),
-        })
-        console.log('⏳ Waiting for confirmation...')
-        const receipt = await tx.wait()
-        txHash = receipt?.hash || ''
-      } 
-      // ERC20 token transfer
-      else {
-        console.log('💸 Direct token transfer')
-        console.log('Token address:', fromToken.address)
-        
-        const tokenContract = new ethers.Contract(
-          fromToken.address,
-          [
-            'function transfer(address to, uint256 amount) returns (bool)',
-            'function decimals() view returns (uint8)',
-            'function balanceOf(address) view returns (uint256)',
-          ],
-          signer
-        )
+      console.log('� Executing swap with real DEX integration...')
+      console.log('From:', fromAmount, fromToken.symbol)
+      console.log('To:', toAmount, toToken.symbol)
+      console.log('Recipient:', recipient)
 
-        // Double check balance
-        const balance = await tokenContract.balanceOf(address)
-        const balanceFormatted = ethers.formatUnits(balance, fromToken.decimals)
-        console.log('Current balance:', balanceFormatted, fromToken.symbol)
-        
-        const amount = ethers.parseUnits(fromAmount, fromToken.decimals)
-        console.log('Transferring:', amount.toString(), 'raw units')
-        
-        const tx = await tokenContract.transfer(recipient, amount)
-        console.log('⏳ Waiting for confirmation...')
-        const receipt = await tx.wait()
-        txHash = receipt?.hash || ''
+      // Execute the swap
+      const swapResult = await swapService.executeSwap({
+        fromToken,
+        toToken,
+        fromAmount,
+        recipient,
+        slippage // Use the slippage from the widget state
+      })
+
+      if (!swapResult.success) {
+        throw new Error(swapResult.error || 'Swap failed')
       }
 
-      console.log('✅ Payment completed:', txHash)
-      console.log('View on Arbiscan: https://arbiscan.io/tx/' + txHash)
+      const txHash = swapResult.transactionHash || ''
+
+      console.log('✅ Swap completed successfully:', txHash)
+      console.log('View on Etherscan: https://etherscan.io/tx/' + txHash)
       
       // Refresh balance
       await fetchBalance()
       
-      onSwapComplete?.(txHash, parseFloat(toAmount))
+      // Call success callback with the actual output amount
+      onSwapComplete?.(txHash, parseFloat(swapResult.amountOut || toAmount))
     } catch (error: any) {
       console.error('❌ Payment failed:', error)
       
@@ -288,13 +282,17 @@ export const UniswapV4Widget: React.FC<UniswapV4WidgetProps> = ({
       let errorMessage = 'Payment failed'
       
       if (error.message.includes('insufficient funds')) {
-        errorMessage = 'Insufficient ETH for gas. Bridge ETH to Arbitrum at https://bridge.arbitrum.io/'
+        errorMessage = 'Insufficient ETH for gas fees. Please add more ETH to your wallet.'
       } else if (error.message.includes('user rejected')) {
         errorMessage = 'Transaction rejected by user'
       } else if (error.message.includes('missing revert data')) {
-        errorMessage = `Cannot transfer ${fromToken.symbol}. Make sure you're on Arbitrum One network!`
-      } else if (error.code === 'CALL_EXCEPTION') {
-        errorMessage = `Transaction failed. Make sure you're connected to Arbitrum One network.`
+        errorMessage = `Transaction failed. Make sure you're on Ethereum mainnet and have the required tokens!`
+      } else if (error.message.includes('CALL_EXCEPTION')) {
+        errorMessage = `Smart contract call failed. Ensure you're connected to Ethereum mainnet.`
+      } else if (error.message.includes('Wallet not connected')) {
+        errorMessage = 'Please connect your wallet and try again'
+      } else if (error.message.includes('Hook contract')) {
+        errorMessage = 'Payment contract not available. Please try again later.'
       } else {
         errorMessage = error.message || 'Payment failed'
       }
@@ -323,13 +321,13 @@ export const UniswapV4Widget: React.FC<UniswapV4WidgetProps> = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="p-4 space-y-4">
-        {/* Arbitrum One Info */}
+        {/* Ethereum Network Info */}
         <Alert className="bg-blue-500/10 border-blue-500/20">
           <Zap className="h-4 w-4 text-blue-400" />
           <AlertDescription className="text-sm">
-            <p className="font-semibold">⚡ Arbitrum One - 95% Cheaper Gas!</p>
+            <p className="font-semibold">🔷 Ethereum Mainnet</p>
             <p className="text-xs mt-1 text-muted-foreground">
-              Gas fee: ~$0.10 (vs $2.50 on Ethereum mainnet)
+              Secure & decentralized • Industry standard
             </p>
           </AlertDescription>
         </Alert>
@@ -490,7 +488,7 @@ export const UniswapV4Widget: React.FC<UniswapV4WidgetProps> = ({
 
           <div className="flex justify-between items-center">
             <span className="text-muted-foreground">Network Fee</span>
-            <span className="font-semibold text-green-600">~$0.10</span>
+            <span className="font-semibold text-yellow-600">~$15-50</span>
           </div>
         </div>
 
@@ -538,10 +536,15 @@ export const UniswapV4Widget: React.FC<UniswapV4WidgetProps> = ({
               <Loader2 className="h-5 w-5 mr-2 animate-spin" />
               Loading Quote...
             </>
+          ) : fromToken.symbol === toToken.symbol ? (
+            <>
+              <Wallet className="h-5 w-5 mr-2" />
+              Send {toToken.symbol}
+            </>
           ) : (
             <>
-              <Zap className="h-5 w-5 mr-2" />
-              Send Payment
+              <ArrowDownUp className="h-5 w-5 mr-2" />
+              Swap & Pay
             </>
           )}
         </Button>
@@ -549,7 +552,10 @@ export const UniswapV4Widget: React.FC<UniswapV4WidgetProps> = ({
         {/* Info */}
         <div className="text-center">
           <p className="text-xs text-muted-foreground">
-            Direct transfer • Secured by your wallet
+            {fromToken.symbol === toToken.symbol 
+              ? `Direct ${toToken.symbol} transfer • Secured by smart contract`
+              : `🔄 Real token swap via Uniswap V3 • Recipient gets ${toToken.symbol}`
+            }
           </p>
         </div>
       </CardContent>

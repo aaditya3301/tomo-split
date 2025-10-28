@@ -2,14 +2,14 @@ import React, { createContext, useContext, ReactNode } from 'react'
 import { createAppKit } from '@reown/appkit/react'
 import { WagmiProvider } from 'wagmi'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { mainnet, arbitrum, type AppKitNetwork } from '@reown/appkit/networks'
+import { mainnet, type AppKitNetwork } from '@reown/appkit/networks'
 import { wagmiAdapter, projectId } from '@/lib/wagmi'
 
 // Set up React Query
 const queryClient = new QueryClient()
 
-// Define networks with proper typing
-const appKitNetworks: [AppKitNetwork, ...AppKitNetwork[]] = [mainnet, arbitrum]
+// Define networks with proper typing - Ethereum mainnet only
+const appKitNetworks: [AppKitNetwork, ...AppKitNetwork[]] = [mainnet]
 
 // Create the modal with error handling
 try {
