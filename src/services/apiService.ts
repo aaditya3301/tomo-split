@@ -1,8 +1,6 @@
 import { FriendData, GroupData, SplitData, UserDues } from './databaseService'
 
-// Use current domain for API calls when deployed, localhost for development
-const API_BASE_URL = import.meta.env.VITE_API_URL || 
-  (window.location.hostname === 'localhost' ? 'http://localhost:3001/api' : '/api')
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
 
 console.log('🔗 Frontend API Base URL:', API_BASE_URL)
 console.log('🌐 Frontend running on:', window.location.origin)
