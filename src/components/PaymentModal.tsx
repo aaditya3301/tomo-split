@@ -61,7 +61,6 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [activeTab, setActiveTab] = useState<'swap' | 'direct'>('swap')
 
   const handleSwapComplete = async (txHash: string, amountOut: number) => {
-    console.log('✅ Swap completed:', { txHash, amountOut })
     setPaymentStatus('success')
     setTransactionId(txHash)
     
@@ -72,7 +71,6 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   }
 
   const handleSwapError = (error: string) => {
-    console.error('❌ Swap failed:', error)
     setPaymentStatus('error')
     setError(error)
   }
@@ -88,8 +86,6 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     setError('')
 
     try {
-      console.log('🚀 Starting payment process...')
-      
       // Initialize payment service with ethers provider
       const provider = new ethers.BrowserProvider(walletClient as any)
       const signer = await provider.getSigner()
@@ -107,15 +103,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
       let result
       if (paymentMethod === 'swap') {
-        console.log('💱 Executing swap payment...')
         result = await paymentService.executePayment(paymentParams)
       } else {
-        console.log('📝 Recording direct payment...')
         result = await paymentService.recordManualPayment(paymentParams)
       }
 
       if (result.success && result.transactionId) {
-        console.log('✅ Payment successful:', result.transactionId)
         setPaymentStatus('success')
         setTransactionId(result.transactionId)
         
@@ -124,12 +117,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           onPaymentSuccess(result.transactionId)
         }
       } else {
-        console.error('❌ Payment failed:', result.error)
         setPaymentStatus('error')
         setError(result.error || 'Payment failed')
       }
     } catch (err: any) {
-      console.error('❌ Payment error:', err)
       setPaymentStatus('error')
       setError(err.message || 'An unexpected error occurred')
     } finally {
@@ -148,40 +139,40 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center">
-              <DollarSign className="h-4 w-4 text-black" />
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto bg-black border-yellow-500">
+        <DialogHeader className="border-b border-yellow-500/30 pb-4">
+          <DialogTitle className="flex items-center space-x-3 text-white">
+            <div className="w-10 h-10 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center shadow-lg">
+              <DollarSign className="h-5 w-5 text-black" />
             </div>
-            <span>Process Payment</span>
+            <span className="text-xl font-bold">Process Payment</span>
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-white/70">
             Pay your share using Uniswap V4 or direct transfer
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           {/* Transaction Details */}
-          <div className="p-4 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-black rounded-lg border border-gray-200 dark:border-gray-800">
-            <div className="space-y-3">
+          <div className="p-6 bg-yellow-500/10 rounded-xl border border-yellow-500/30 shadow-lg">
+            <div className="space-y-4">
               {/* Group Info */}
               <div className="flex items-center justify-between">
-                <Label className="text-xs text-muted-foreground">Group</Label>
-                <Badge variant="secondary">{groupName}</Badge>
+                <Label className="text-sm text-white/70 font-medium">Group</Label>
+                <Badge className="bg-yellow-500/30 text-yellow-300 border-yellow-500">{groupName}</Badge>
               </div>
 
               <Separator />
 
               {/* From */}
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center">
-                  <User className="h-5 w-5 text-white" />
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-500 to-yellow-600 border-2 border-yellow-400 flex items-center justify-center shadow-lg">
+                  <User className="h-5 w-5 text-black" />
                 </div>
                 <div className="flex-1">
-                  <Label className="text-xs text-muted-foreground">From (You)</Label>
-                  <p className="font-semibold">{fromMemberName}</p>
-                  <p className="text-xs text-muted-foreground font-mono">
+                  <Label className="text-sm text-white/70 font-medium">From (You)</Label>
+                  <p className="font-bold text-white text-lg">{fromMemberName}</p>
+                  <p className="text-sm text-white/60 font-mono">
                     {transaction.from.slice(0, 6)}...{transaction.from.slice(-4)}
                   </p>
                 </div>
@@ -196,13 +187,13 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
               {/* To */}
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center">
-                  <User className="h-5 w-5 text-white" />
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-500 border-2 border-yellow-300 flex items-center justify-center shadow-lg">
+                  <User className="h-5 w-5 text-black" />
                 </div>
                 <div className="flex-1">
-                  <Label className="text-xs text-muted-foreground">To</Label>
-                  <p className="font-semibold">{toMemberName}</p>
-                  <p className="text-xs text-muted-foreground font-mono">
+                  <Label className="text-sm text-white/70 font-medium">To</Label>
+                  <p className="font-bold text-white text-lg">{toMemberName}</p>
+                  <p className="text-sm text-white/60 font-mono">
                     {transaction.to.slice(0, 6)}...{transaction.to.slice(-4)}
                   </p>
                 </div>
@@ -212,12 +203,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
               {/* Amount */}
               <div className="flex items-center justify-between">
-                <Label className="text-sm text-muted-foreground">Amount to Pay</Label>
+                <Label className="text-lg text-white font-bold">Amount to Pay</Label>
                 <div className="text-right">
-                  <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+                  <p className="text-3xl font-black text-yellow-400">
                     ${transaction.amount.toFixed(2)}
                   </p>
-                  <p className="text-xs text-muted-foreground">USD</p>
+                  <p className="text-sm text-white/60 font-medium">USD</p>
                 </div>
               </div>
             </div>
@@ -317,9 +308,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           )}
 
           {paymentStatus === 'success' && (
-            <Alert className="border-green-500 bg-green-50 dark:bg-green-950">
-              <CheckCircle2 className="h-4 w-4 text-green-600" />
-              <AlertDescription className="text-green-900 dark:text-green-100">
+            <Alert className="border-yellow-500 bg-yellow-50 dark:bg-yellow-950">
+              <CheckCircle2 className="h-4 w-4 text-yellow-600" />
+              <AlertDescription className="text-yellow-900 dark:text-yellow-100">
                 <p className="font-semibold mb-1">Payment Successful!</p>
                 <p className="text-xs font-mono break-all">
                   Transaction: {transactionId.slice(0, 10)}...{transactionId.slice(-8)}
@@ -352,7 +343,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             <div className="flex justify-end">
               <Button 
                 onClick={handleClose} 
-                className="bg-green-600 hover:bg-green-700"
+                className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold"
               >
                 <CheckCircle2 className="h-4 w-4 mr-2" />
                 Done

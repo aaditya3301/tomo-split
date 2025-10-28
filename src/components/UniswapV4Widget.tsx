@@ -485,11 +485,6 @@ export const UniswapV4Widget: React.FC<UniswapV4WidgetProps> = ({
               {(parseFloat(toAmount) * (1 - slippage / 100)).toFixed(6)} {toToken.symbol}
             </span>
           </div>
-
-          <div className="flex justify-between items-center">
-            <span className="text-muted-foreground">Network Fee</span>
-            <span className="font-semibold text-yellow-600">~$15-50</span>
-          </div>
         </div>
 
         {/* Warnings */}
