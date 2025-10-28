@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { motion } from 'framer-motion'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -172,9 +173,6 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 <div className="flex-1">
                   <Label className="text-sm text-white/70 font-medium">From (You)</Label>
                   <p className="font-bold text-white text-lg">{fromMemberName}</p>
-                  <p className="text-sm text-white/60 font-mono">
-                    {transaction.from.slice(0, 6)}...{transaction.from.slice(-4)}
-                  </p>
                 </div>
               </div>
 
@@ -193,9 +191,6 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 <div className="flex-1">
                   <Label className="text-sm text-white/70 font-medium">To</Label>
                   <p className="font-bold text-white text-lg">{toMemberName}</p>
-                  <p className="text-sm text-white/60 font-mono">
-                    {transaction.to.slice(0, 6)}...{transaction.to.slice(-4)}
-                  </p>
                 </div>
               </div>
 
@@ -229,17 +224,6 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
             {/* Swap Tab */}
             <TabsContent value="swap" className="space-y-4">
-              <div className="text-sm text-muted-foreground bg-blue-50 dark:bg-blue-950 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
-                <div className="flex items-start space-x-2">
-                  <Zap className="h-4 w-4 text-blue-600 mt-0.5" />
-                  <div>
-                    <p className="font-semibold text-blue-900 dark:text-blue-100">Uniswap V4 Integration</p>
-                    <p className="text-xs text-blue-700 dark:text-blue-300">
-                      Swap any token to the required amount and pay directly through our custom hook.
-                    </p>
-                  </div>
-                </div>
-              </div>
 
               {/* Uniswap V4 Widget */}
               <UniswapV4Widget
@@ -283,7 +267,19 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 >
                   {isProcessing ? (
                     <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <motion.img
+                        src="/favicon.ico"
+                        alt="Processing"
+                        className="w-4 h-4 mr-2"
+                        initial={{ scale: 0.8, opacity: 0.7 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ 
+                          duration: 1.2, 
+                          repeat: Infinity, 
+                          repeatType: "reverse",
+                          ease: "easeInOut"
+                        }}
+                      />
                       Processing...
                     </>
                   ) : (
@@ -299,9 +295,21 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
           {/* Status Messages */}
           {paymentStatus === 'processing' && (
-            <Alert className="border-blue-500 bg-blue-50 dark:bg-blue-950">
-              <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
-              <AlertDescription className="text-blue-900 dark:text-blue-100">
+            <Alert className="border-yellow-500 bg-yellow-50 dark:bg-yellow-950">
+              <motion.img
+                src="/favicon.ico"
+                alt="Processing"
+                className="w-4 h-4"
+                initial={{ scale: 0.8, opacity: 0.7 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ 
+                  duration: 1.2, 
+                  repeat: Infinity, 
+                  repeatType: "reverse",
+                  ease: "easeInOut"
+                }}
+              />
+              <AlertDescription className="text-yellow-900 dark:text-yellow-100">
                 Processing payment... Please confirm the transaction in your wallet.
               </AlertDescription>
             </Alert>

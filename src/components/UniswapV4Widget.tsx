@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -326,9 +327,6 @@ export const UniswapV4Widget: React.FC<UniswapV4WidgetProps> = ({
           <Zap className="h-4 w-4 text-blue-400" />
           <AlertDescription className="text-sm">
             <p className="font-semibold">🔷 Ethereum Mainnet</p>
-            <p className="text-xs mt-1 text-muted-foreground">
-              Secure & decentralized • Industry standard
-            </p>
           </AlertDescription>
         </Alert>
 
@@ -339,7 +337,19 @@ export const UniswapV4Widget: React.FC<UniswapV4WidgetProps> = ({
             {address && (
               <span className="text-xs text-muted-foreground">
                 {isLoadingBalance ? (
-                  <Loader2 className="h-3 w-3 animate-spin inline" />
+                  <motion.img
+                    src="/favicon.ico"
+                    alt="Loading"
+                    className="w-3 h-3 inline"
+                    initial={{ scale: 0.8, opacity: 0.7 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ 
+                      duration: 1.2, 
+                      repeat: Infinity, 
+                      repeatType: "reverse",
+                      ease: "easeInOut"
+                    }}
+                  />
                 ) : (
                   `Balance: ${parseFloat(userBalance).toFixed(6)} ${fromToken.symbol}`
                 )}
@@ -360,12 +370,7 @@ export const UniswapV4Widget: React.FC<UniswapV4WidgetProps> = ({
               <SelectContent>
                 {TOKENS.map((token) => (
                   <SelectItem key={token.symbol} value={token.symbol}>
-                    <div className="flex items-center space-x-2">
-                      {token.logoUri && (
-                        <img src={token.logoUri} alt={token.symbol} className="w-5 h-5 rounded-full" />
-                      )}
-                      <span>{token.symbol}</span>
-                    </div>
+                    <span>{token.symbol}</span>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -416,12 +421,7 @@ export const UniswapV4Widget: React.FC<UniswapV4WidgetProps> = ({
               <SelectContent>
                 {TOKENS.map((token) => (
                   <SelectItem key={token.symbol} value={token.symbol}>
-                    <div className="flex items-center space-x-2">
-                      {token.logoUri && (
-                        <img src={token.logoUri} alt={token.symbol} className="w-5 h-5 rounded-full" />
-                      )}
-                      <span>{token.symbol}</span>
-                    </div>
+                    <span>{token.symbol}</span>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -451,7 +451,19 @@ export const UniswapV4Widget: React.FC<UniswapV4WidgetProps> = ({
             <span className="text-muted-foreground">Price Impact</span>
             <span className={`font-semibold ${isPriceImpactHigh ? 'text-orange-600' : 'text-green-600'}`}>
               {isLoadingQuote ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <motion.img
+                  src="/favicon.ico"
+                  alt="Loading"
+                  className="w-4 h-4"
+                  initial={{ scale: 0.8, opacity: 0.7 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ 
+                    duration: 1.2, 
+                    repeat: Infinity, 
+                    repeatType: "reverse",
+                    ease: "easeInOut"
+                  }}
+                />
               ) : (
                 <>
                   {priceImpact < 0.01 ? '<0.01' : priceImpact.toFixed(2)}%
@@ -545,14 +557,14 @@ export const UniswapV4Widget: React.FC<UniswapV4WidgetProps> = ({
         </Button>
 
         {/* Info */}
-        <div className="text-center">
+        {/* <div className="text-center">
           <p className="text-xs text-muted-foreground">
             {fromToken.symbol === toToken.symbol 
               ? `Direct ${toToken.symbol} transfer • Secured by smart contract`
               : `🔄 Real token swap via Uniswap V3 • Recipient gets ${toToken.symbol}`
             }
           </p>
-        </div>
+        </div> */}
       </CardContent>
     </Card>
   )

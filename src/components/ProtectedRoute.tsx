@@ -25,10 +25,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   if (isConnecting) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-          <p className="text-muted-foreground">Connecting wallet...</p>
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-yellow-400" />
+          <p className="text-white/70">Connecting wallet...</p>
         </div>
       </div>
     )
@@ -36,19 +36,19 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   if (!isConnected) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4 text-foreground">Wallet Not Connected</h2>
-          <p className="text-muted-foreground mb-6">Please connect your wallet to access the dashboard.</p>
+          <h2 className="text-2xl font-bold mb-4 text-white">Wallet Not Connected</h2>
+          <p className="text-white/70 mb-6">Please connect your wallet to access the dashboard.</p>
           <button
             onClick={() => open()}
-            className="bg-gradient-to-r from-primary to-accent text-primary-foreground px-6 py-3 rounded-lg hover:opacity-90 transition-opacity"
+            className="bg-gradient-to-r from-yellow-500 to-yellow-400 text-black font-bold px-6 py-3 rounded-lg hover:from-yellow-400 hover:to-yellow-300 transition-all duration-300 shadow-lg hover:shadow-xl"
           >
             Connect Wallet
           </button>
           <button
             onClick={() => navigate('/')}
-            className="ml-4 px-6 py-3 rounded-lg border border-border hover:bg-muted transition-colors"
+            className="ml-4 px-6 py-3 rounded-lg border border-yellow-500/50 text-white hover:bg-yellow-500/20 hover:border-yellow-400 transition-all duration-300"
           >
             Back to Home
           </button>

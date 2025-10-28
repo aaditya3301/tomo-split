@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import DashboardLayout from '@/layouts/DashboardLayout'
 import FriendsSection from '@/components/FriendsSection'
 import GroupModal from '@/components/GroupModal'
@@ -228,10 +229,22 @@ const Dashboard: React.FC = () => {
 
       {/* Loading Indicator */}
       {isLoading && (
-        <div className="mb-4 p-3 rounded-lg border border-border/20 bg-card/50">
+        <div className="mb-4 p-3 rounded-lg border border-yellow-500/20 bg-yellow-500/5">
           <div className="flex items-center">
-            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            <span className="text-sm">Loading data from database...</span>
+            <motion.img
+              src="/favicon.ico"
+              alt="Loading"
+              className="w-4 h-4 mr-2"
+              initial={{ scale: 0.8, opacity: 0.7 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ 
+                duration: 1.2, 
+                repeat: Infinity, 
+                repeatType: "reverse",
+                ease: "easeInOut"
+              }}
+            />
+            <span className="text-sm text-white/80">Loading data from database...</span>
           </div>
         </div>
       )}

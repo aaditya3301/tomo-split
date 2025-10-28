@@ -346,3 +346,15 @@ reown-modal button:hover {
     opacity: 0;
   }
 }
+
+/* Fix w3m-modal background color with translucency */
+w3m-modal {
+  background: rgba(0, 0, 0, 0.5) !important;
+  backdrop-filter: blur(4px) !important;
+  --w3m-overlay-backdrop: rgba(0, 0, 0, 0.5) !important;
+}
+
+w3m-modal * {
+  background: rgba(0, 0, 0, 0.5) !important;
+  color: #ffffff !important;
+}

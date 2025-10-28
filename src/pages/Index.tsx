@@ -129,7 +129,19 @@ const Index = () => {
             animate={{ opacity: 1 }}
             className="text-center"
           >
-            <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-4" />
+            <motion.img
+              src="/favicon.ico"
+              alt="Site Logo"
+              className="w-16 h-16 mx-auto mb-4"
+              initial={{ scale: 0.8, opacity: 0.7 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ 
+                duration: 1.5, 
+                repeat: Infinity, 
+                repeatType: "reverse",
+                ease: "easeInOut"
+              }}
+            />
             <p className="text-white/70">Loading experience...</p>
           </motion.div>
         </div>

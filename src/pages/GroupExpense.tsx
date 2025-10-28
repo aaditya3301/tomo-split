@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -403,10 +404,22 @@ const GroupExpense: React.FC = () => {
   // Show loading state while fetching group
   if (isLoadingGroup) {
     return (
-      <div className="flex items-center justify-center h-screen bg-background">
+      <div className="flex items-center justify-center h-screen bg-black">
         <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="text-muted-foreground">Loading group...</p>
+          <motion.img
+            src="/favicon.ico"
+            alt="Loading"
+            className="w-12 h-12 mx-auto"
+            initial={{ scale: 0.8, opacity: 0.7 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ 
+              duration: 1.5, 
+              repeat: Infinity, 
+              repeatType: "reverse",
+              ease: "easeInOut"
+            }}
+          />
+          <p className="text-white/70">Loading group...</p>
         </div>
       </div>
     )
@@ -457,17 +470,13 @@ const GroupExpense: React.FC = () => {
               <div>
                 <h1 className="text-2xl font-bold text-white">{group.name}</h1>
                 <p className="text-yellow-400 font-medium">
-                  {groupMembers.length} member{groupMembers.length !== 1 ? 's' : ''} • Live sync
+                  {groupMembers.length} member{groupMembers.length !== 1 ? 's' : ''}
                 </p>
               </div>
             </div>
           </div>
           
           <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2 px-3 py-2 bg-yellow-500/20 rounded-lg border border-yellow-500/30">
-              <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
-              <span className="text-yellow-400 font-medium">Real-time</span>
-            </div>
             <Dialog open={isAddExpenseOpen} onOpenChange={setIsAddExpenseOpen}>
               <DialogTrigger asChild>
                 <Button className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 px-6 py-3 rounded-lg">
@@ -682,9 +691,6 @@ const GroupExpense: React.FC = () => {
                   </div>
                   <span className="text-xl font-bold text-white">Financial Dashboard</span>
                 </div>
-                <div className="px-3 py-1 bg-yellow-500/30 text-yellow-300 rounded-full text-sm font-bold border border-yellow-500">
-                  Real-time Data
-                </div>
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6 bg-black">
@@ -743,79 +749,29 @@ const GroupExpense: React.FC = () => {
                       return (
                         <div 
                           key={index} 
-                          className="group p-6 rounded-2xl bg-yellow-500/10 border border-yellow-500/50 shadow-xl hover:shadow-2xl transition-all duration-300 hover:border-yellow-400"
+                          className="group p-8 rounded-2xl bg-yellow-500/10 border border-yellow-500/50 shadow-xl hover:shadow-2xl transition-all duration-300 hover:border-yellow-400"
                         >
-                          <div className="flex items-center justify-between mb-4">
-                            <div className="flex items-center space-x-6">
-                              <div className="flex items-center space-x-3">
-                                <div className="relative">
-                                  <div className="w-14 h-14 rounded-full bg-yellow-500/30 border-2 border-yellow-500 flex items-center justify-center shadow-lg">
-                                    <span className="text-lg font-bold text-white">
-                                      {(fromMember?.name || transaction.from || 'U').charAt(0).toUpperCase()}
-                                    </span>
-                                  </div>
-                                  {fromMember?.isCurrentUser && (
-                                    <div className="absolute -top-2 -right-2 w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center shadow-lg">
-                                      <span className="text-xs font-bold text-black">YOU</span>
-                                    </div>
-                                  )}
-                                </div>
-                                <div>
-                                  <span className="font-bold text-white text-lg group-hover:text-yellow-400 transition-colors duration-300">
-                                    {fromMember?.name || transaction.from}
-                                  </span>
-                                  <p className="text-sm text-yellow-400 font-medium">Sender</p>
-                                </div>
-                              </div>
-                              
-                              <div className="flex flex-col items-center space-y-1">
-                                <ArrowRightLeft className="h-6 w-6 text-yellow-400" />
-                                <div className="px-3 py-1 bg-yellow-500/30 rounded-full border border-yellow-500">
-                                  <span className="text-xs font-bold text-yellow-300">PAYMENT</span>
-                                </div>
-                              </div>
-                              
-                              <div className="flex items-center space-x-3">
-                                <div className="relative">
-                                  <div className="w-14 h-14 rounded-full bg-yellow-500/30 border-2 border-yellow-500 flex items-center justify-center shadow-lg">
-                                    <span className="text-lg font-bold text-white">
-                                      {(toMember?.name || transaction.to || 'U').charAt(0).toUpperCase()}
-                                    </span>
-                                  </div>
-                                  {toMember?.isCurrentUser && (
-                                    <div className="absolute -top-2 -right-2 w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center shadow-lg">
-                                      <span className="text-xs font-bold text-black">YOU</span>
-                                    </div>
-                                  )}
-                                </div>
-                                <div>
-                                  <span className="font-bold text-white text-lg group-hover:text-yellow-400 transition-colors duration-300">
-                                    {toMember?.name || transaction.to}
-                                  </span>
-                                  <p className="text-sm text-yellow-400 font-medium">Receiver</p>
-                                </div>
-                              </div>
-                            </div>
-                            
-                            <div className="text-right">
-                              <p className="text-3xl font-black text-yellow-400 mb-1">
-                                ${transaction.amount.toFixed(2)}
-                              </p>
-                              <p className="text-sm text-white/70 font-medium uppercase tracking-wider">
+                          <div className="flex items-center justify-center mb-8">
+                            <div className="text-center p-6 bg-black/30 rounded-2xl border border-yellow-500/30 min-w-[280px]">
+                              <p className="text-sm text-white/70 font-medium uppercase tracking-wider mb-3">
                                 Amount Due
                               </p>
+                              <p className="text-4xl font-black text-yellow-400 mb-2">
+                                ${transaction.amount.toFixed(2)}
+                              </p>
+                              <div className="w-16 h-1 bg-gradient-to-r from-transparent via-yellow-400 to-transparent mx-auto"></div>
                             </div>
                           </div>
                           
                           {/* Pay Button - Only show if current user is the payer */}
                           {fromMember?.isCurrentUser && (
-                            <div className="flex justify-center pt-4 border-t border-yellow-500/30">
+                            <div className="pt-6 border-t border-yellow-500/30">
                               <Button
                                 onClick={() => handlePayClick(transaction)}
-                                className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 px-8 py-3 rounded-xl"
+                                className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 px-8 py-4 rounded-xl text-lg"
                                 size="lg"
                               >
-                                <Wallet className="h-5 w-5 mr-3" />
+                                <Wallet className="h-6 w-6 mr-3" />
                                 Pay ${transaction.amount.toFixed(2)} Now
                               </Button>
                             </div>
@@ -833,9 +789,6 @@ const GroupExpense: React.FC = () => {
                           <Calculator className="h-4 w-4 text-black" />
                         </div>
                         <h4 className="text-lg font-bold text-white">Current Balances</h4>
-                        <div className="px-2 py-1 bg-yellow-400/20 text-yellow-400 rounded-full text-xs font-semibold border border-yellow-400/50">
-                          Real-time
-                        </div>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                         {Object.entries(settlementData.balances).map(([person, balance]: [string, any], index) => {
@@ -954,9 +907,6 @@ const GroupExpense: React.FC = () => {
                                 <h4 className="font-bold text-white text-lg mb-2">{expense.title}</h4>
                                 <p className="text-white/80">
                                   Paid by <span className="text-yellow-400 font-medium">{expense.paidByName || 'Unknown'}</span>
-                                  <span className="text-white/60 text-sm ml-2">
-                                    ({expense.paidBy ? `${expense.paidBy.slice(0, 6)}...${expense.paidBy.slice(-4)}` : 'Unknown'})
-                                  </span>
                                 </p>
                               </div>
                               <div className="text-right">
