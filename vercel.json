@@ -1,39 +1,4 @@
 {
-  "functions": {
-    "api/*.ts": {
-      "runtime": "@vercel/node"
-    }
-  },
-  "rewrites": [
-    {
-      "source": "/api/users/(.*)",
-      "destination": "/api/users?walletAddress=$1"
-    },
-    {
-      "source": "/api/friends/(.*)",
-      "destination": "/api/friends?walletAddress=$1"
-    },
-    {
-      "source": "/api/groups/(.*)",
-      "destination": "/api/groups?walletAddress=$1"
-    },
-    {
-      "source": "/api/splits/group/(.*)",
-      "destination": "/api/splits?groupId=$1"
-    },
-    {
-      "source": "/api/dues/(.*)",
-      "destination": "/api/dues?walletAddress=$1"
-    },
-    {
-      "source": "/api/ens/cache/(.*)",
-      "destination": "/api/ens-cache?ensName=$1"
-    },
-    {
-      "source": "/api/friends/(.*)/(.*)$",
-      "destination": "/api/friends?userWallet=$1&friendId=$2"
-    }
-  ],
   "headers": [
     {
       "source": "/api/(.*)",

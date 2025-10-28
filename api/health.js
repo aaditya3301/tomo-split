@@ -1,16 +1,12 @@
-import { VercelRequest, VercelResponse } from '@vercel/node'
-import { databaseService } from '../src/services/databaseService'
-import dotenv from 'dotenv'
-
-// Load environment variables
-dotenv.config()
+const { databaseService } = require('../src/services/databaseService')
+require('dotenv').config()
 
 // Ensure DATABASE_URL is available from VITE_DATABASE_URL if needed
 if (!process.env.DATABASE_URL && process.env.VITE_DATABASE_URL) {
   process.env.DATABASE_URL = process.env.VITE_DATABASE_URL
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+module.exports = async function handler(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
@@ -32,7 +28,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       database: 'Connected',
       timestamp: new Date().toISOString() 
     })
-  } catch (error: any) {
+  } catch (error) {
     console.error('❌ Database health check failed:', error)
     res.status(500).json({ 
       status: 'ERROR', 
