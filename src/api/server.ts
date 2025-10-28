@@ -26,8 +26,11 @@ const corsOptions = {
     'http://localhost:3002',
     'http://localhost:3000',
     'http://127.0.0.1:5173',
-    'http://127.0.0.1:3002'
-  ],
+    'http://127.0.0.1:3002',
+    // Add your Vercel deployment domain
+    /^https:\/\/.*\.vercel\.app$/,  // Matches any *.vercel.app domain
+    process.env.FRONTEND_URL,      // Custom domain env var
+  ].filter(Boolean), // Remove any undefined values
   credentials: true,
   optionsSuccessStatus: 200
 }
