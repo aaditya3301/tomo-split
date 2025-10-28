@@ -26,7 +26,11 @@ const corsOptions = {
     'http://localhost:3002',
     'http://localhost:3000',
     'http://127.0.0.1:5173',
-    'http://127.0.0.1:3002'
+    'http://127.0.0.1:3002',
+    // Production Vercel domain
+    'https://tomo-split-five.vercel.app',
+    // Allow any Vercel preview deployments
+    /^https:\/\/tomo-split-.*\.vercel\.app$/
   ],
   credentials: true,
   optionsSuccessStatus: 200
