@@ -49,12 +49,29 @@ export default async function handler(req, res) {
 
       console.log(`🔄 GET /api/groups/${walletAddress}`)
       
+      // First find the user by wallet address
+      const user = await prisma.user.findUnique({
+        where: { walletAddress: walletAddress.toLowerCase() }
+      })
+
+      if (!user) {
+        console.log(`✅ User not found, returning empty groups for ${walletAddress}`)
+        return res.json({ success: true, data: [] })
+      }
+
+      // Get groups where user is creator or member
       const groups = await prisma.group.findMany({
         where: {
           OR: [
-            { creatorWallet: walletAddress.toLowerCase() },
-            { members: { has: walletAddress.toLowerCase() } }
+            { creatorId: user.id },
+            { members: { some: { userId: user.id } } }
           ]
+        },
+        include: {
+          creator: true,
+          members: {
+            include: { user: true }
+          }
         }
       })
       
@@ -62,20 +79,61 @@ export default async function handler(req, res) {
       return res.json({ success: true, data: groups })
       
     } else if (req.method === 'POST') {
-      // Handle POST /api/groups
+    } else if (req.method === 'POST') {
       const { creatorWallet, name, memberWallets } = req.body
       
       if (!creatorWallet || !name) {
         return res.status(400).json({ success: false, error: 'creatorWallet and name are required' })
       }
+
+      // Find or create the creator user
+      let creator = await prisma.user.findUnique({
+        where: { walletAddress: creatorWallet.toLowerCase() }
+      })
+
+      if (!creator) {
+        creator = await prisma.user.create({
+          data: { walletAddress: creatorWallet.toLowerCase() }
+        })
+      }
       
       const group = await prisma.group.create({
         data: {
-          creatorWallet: creatorWallet.toLowerCase(),
-          name,
-          members: (memberWallets || []).map(w => w.toLowerCase())
+          creatorId: creator.id,
+          name
         }
       })
+
+      // Add creator as a member
+      await prisma.groupMember.create({
+        data: {
+          groupId: group.id,
+          userId: creator.id,
+          role: 'ADMIN'
+        }
+      })
+
+      // Add other members if provided
+      if (memberWallets && memberWallets.length > 0) {
+        for (const walletAddress of memberWallets) {
+          let member = await prisma.user.findUnique({
+            where: { walletAddress: walletAddress.toLowerCase() }
+          })
+
+          if (!member) {
+            member = await prisma.user.create({
+              data: { walletAddress: walletAddress.toLowerCase() }
+            })
+          }
+
+          await prisma.groupMember.create({
+            data: {
+              groupId: group.id,
+              userId: member.id
+            }
+          })
+        }
+      }
       
       return res.json({ success: true, data: group })
     } else {

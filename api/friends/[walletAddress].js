@@ -51,28 +51,60 @@ export default async function handler(req, res) {
       
       const user = await prisma.user.findUnique({
         where: { walletAddress: walletAddress.toLowerCase() },
-        include: { friends: true }
+        include: { 
+          friendsAsUser: {
+            include: { friend: true }
+          }
+        }
       })
       
-      const friends = user?.friends || []
+      const friends = user?.friendsAsUser || []
       console.log(`✅ Retrieved ${friends.length} friends for ${walletAddress}`)
       
       return res.json({ success: true, data: friends })
       
     } else if (req.method === 'POST') {
-      // Handle POST /api/friends
+    } else if (req.method === 'POST') {
       const { userWallet, friendData } = req.body
       
       if (!userWallet || !friendData) {
         return res.status(400).json({ success: false, error: 'userWallet and friendData are required' })
       }
+
+      // Find or create the user
+      let user = await prisma.user.findUnique({
+        where: { walletAddress: userWallet.toLowerCase() }
+      })
+
+      if (!user) {
+        user = await prisma.user.create({
+          data: { walletAddress: userWallet.toLowerCase() }
+        })
+      }
+
+      // Find or create the friend
+      let friend = await prisma.user.findUnique({
+        where: { walletAddress: friendData.walletAddress.toLowerCase() }
+      })
+
+      if (!friend) {
+        friend = await prisma.user.create({
+          data: { 
+            walletAddress: friendData.walletAddress.toLowerCase(),
+            ensName: friendData.ensName,
+            displayName: friendData.displayName
+          }
+        })
+      }
       
       const friendship = await prisma.friend.create({
         data: {
-          userWallet: userWallet.toLowerCase(),
-          walletAddress: friendData.walletAddress.toLowerCase(),
-          ensName: friendData.ensName,
-          displayName: friendData.displayName
+          userId: user.id,
+          friendId: friend.id,
+          friendAddress: friendData.walletAddress.toLowerCase(),
+          friendENS: friendData.ensName,
+          nickname: friendData.displayName,
+          isENS: !!friendData.ensName
         }
       })
       
