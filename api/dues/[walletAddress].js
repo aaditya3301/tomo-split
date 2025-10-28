@@ -44,10 +44,9 @@ export default async function handler(req, res) {
 
   try {
     // Handle GET /api/dues/[walletAddress]
-    const { route } = req.query
-    const walletAddress = Array.isArray(route) ? route[0] : route
+    const { walletAddress } = req.query
     
-    if (!walletAddress) {
+    if (!walletAddress || typeof walletAddress !== 'string') {
       return res.status(400).json({ success: false, error: 'Wallet address is required' })
     }
 

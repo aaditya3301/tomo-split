@@ -1,4 +1,4 @@
-// Friends API endpoint for Vercel
+// Users API endpoint for Vercel
 import { PrismaClient } from '@prisma/client'
 
 // Initialize Prisma Client with environment variables
@@ -40,49 +40,41 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      // Handle GET /api/friends/[walletAddress]
-      const { route } = req.query
-      const walletAddress = Array.isArray(route) ? route[0] : route
+      // Handle GET /api/users/[walletAddress]
+      const { walletAddress } = req.query
       
-      if (!walletAddress) {
+      if (!walletAddress || typeof walletAddress !== 'string') {
         return res.status(400).json({ success: false, error: 'Wallet address is required' })
       }
 
-      console.log(`🔄 GET /api/friends/${walletAddress}`)
+      console.log(`🔄 GET /api/users/${walletAddress}`)
       
       const user = await prisma.user.findUnique({
-        where: { walletAddress: walletAddress.toLowerCase() },
-        include: { friends: true }
+        where: { walletAddress: walletAddress.toLowerCase() }
       })
       
-      const friends = user?.friends || []
-      console.log(`✅ Retrieved ${friends.length} friends for ${walletAddress}`)
-      
-      return res.json({ success: true, data: friends })
+      return res.json({ success: true, data: user })
       
     } else if (req.method === 'POST') {
-      // Handle POST /api/friends
-      const { userWallet, friendData } = req.body
+      // Handle POST /api/users
+      const { walletAddress, ensName, displayName } = req.body
       
-      if (!userWallet || !friendData) {
-        return res.status(400).json({ success: false, error: 'userWallet and friendData are required' })
+      if (!walletAddress) {
+        return res.status(400).json({ success: false, error: 'walletAddress is required' })
       }
       
-      const friendship = await prisma.friend.create({
-        data: {
-          userWallet: userWallet.toLowerCase(),
-          walletAddress: friendData.walletAddress.toLowerCase(),
-          ensName: friendData.ensName,
-          displayName: friendData.displayName
-        }
+      const user = await prisma.user.upsert({
+        where: { walletAddress: walletAddress.toLowerCase() },
+        update: { ensName, displayName },
+        create: { walletAddress: walletAddress.toLowerCase(), ensName, displayName }
       })
       
-      return res.json({ success: true, data: friendship })
+      return res.json({ success: true, data: user })
     } else {
       res.status(405).json({ success: false, error: 'Method not allowed' })
     }
   } catch (error) {
-    console.error('❌ Friends API Error:', error)
+    console.error('❌ Users API Error:', error)
     res.status(500).json({ success: false, error: error.message })
   }
 }
