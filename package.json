@@ -20,7 +20,7 @@
   "dependencies": {
     "@hookform/resolvers": "^3.4.2",
     "@lighthouse-web3/sdk": "^0.3.2",
-    "@prisma/client": "^6.16.2",
+    "@prisma/client": "^6.18.0",
     "@radix-ui/react-accordion": "^1.1.2",
     "@radix-ui/react-alert-dialog": "^1.0.5",
     "@radix-ui/react-aspect-ratio": "^1.0.3",
