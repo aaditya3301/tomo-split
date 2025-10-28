@@ -63,52 +63,7 @@ export default async function handler(req, res) {
       
       return res.json({ success: true, data: friends })
       
-    } else if (req.method === 'POST') {
-    } else if (req.method === 'POST') {
-      const { userWallet, friendData } = req.body
-      
-      if (!userWallet || !friendData) {
-        return res.status(400).json({ success: false, error: 'userWallet and friendData are required' })
-      }
 
-      // Find or create the user
-      let user = await prisma.user.findUnique({
-        where: { walletAddress: userWallet.toLowerCase() }
-      })
-
-      if (!user) {
-        user = await prisma.user.create({
-          data: { walletAddress: userWallet.toLowerCase() }
-        })
-      }
-
-      // Find or create the friend
-      let friend = await prisma.user.findUnique({
-        where: { walletAddress: friendData.walletAddress.toLowerCase() }
-      })
-
-      if (!friend) {
-        friend = await prisma.user.create({
-          data: { 
-            walletAddress: friendData.walletAddress.toLowerCase(),
-            ensName: friendData.ensName,
-            displayName: friendData.displayName
-          }
-        })
-      }
-      
-      const friendship = await prisma.friend.create({
-        data: {
-          userId: user.id,
-          friendId: friend.id,
-          friendAddress: friendData.walletAddress.toLowerCase(),
-          friendENS: friendData.ensName,
-          nickname: friendData.displayName,
-          isENS: !!friendData.ensName
-        }
-      })
-      
-      return res.json({ success: true, data: friendship })
     } else {
       res.status(405).json({ success: false, error: 'Method not allowed' })
     }
