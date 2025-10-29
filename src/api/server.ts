@@ -30,7 +30,10 @@ const corsOptions = {
     // Production Vercel domain
     'https://tomo-split-five.vercel.app',
     // Allow any Vercel preview deployments
-    /^https:\/\/tomo-split-.*\.vercel\.app$/
+    /^https:\/\/tomo-split-.*\.vercel\.app$/,
+    // Production custom domain
+    'https://www.tomolabs.in',
+    'https://tomolabs.in'
   ],
   credentials: true,
   optionsSuccessStatus: 200
