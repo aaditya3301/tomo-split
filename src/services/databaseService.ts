@@ -120,20 +120,43 @@ class DatabaseService {
     return /^0x[a-fA-F0-9]{40}$/.test(address)
   }
 
+  // Helper to check if a string is a valid Aptos address
+  private isAptosAddress(address: string): boolean {
+    // Aptos addresses are 64-character hex strings (32 bytes) without 0x prefix
+    // or with 0x prefix (66 characters total)
+    return /^0x[a-fA-F0-9]{64}$/.test(address) || /^[a-fA-F0-9]{64}$/.test(address)
+  }
+
   // User Operations
-  async createOrUpdateUser(walletAddress: string, ensName?: string, displayName?: string) {
+  async createOrUpdateUser(walletAddress: string, ensName?: string, displayName?: string, chainType?: string) {
     try {
+      // Determine chain type from address format if not provided
+      let finalChainType = chainType
+      if (!finalChainType) {
+        if (this.isEthereumAddress(walletAddress)) {
+          finalChainType = 'EVM'
+        } else if (this.isAptosAddress(walletAddress)) {
+          finalChainType = 'APTOS'
+        } else {
+          finalChainType = 'EVM' // Default fallback
+        }
+      }
+
+      console.log('🔄 Creating/updating user:', { walletAddress, chainType: finalChainType })
+
       const user = await this.client.user.upsert({
         where: { walletAddress },
         update: {
           ensName,
           displayName,
+          chainType: finalChainType as any,
           updatedAt: new Date()
         },
         create: {
           walletAddress,
           ensName,
-          displayName
+          displayName,
+          chainType: finalChainType as any
         }
       })
       console.log('✅ User created/updated:', user.id)
@@ -187,10 +210,10 @@ class DatabaseService {
           throw new Error(`Failed to resolve ENS name: ${friendData.walletId}. Please ensure the ENS name exists and try again.`)
         }
       } else {
-        // For regular addresses, validate that it's a proper Ethereum address
-        if (!this.isEthereumAddress(friendData.walletId)) {
-          console.error('❌ Invalid Ethereum address:', friendData.walletId)
-          throw new Error(`Invalid Ethereum address: ${friendData.walletId}`)
+        // For regular addresses, validate that it's a proper Ethereum or Aptos address
+        if (!this.isEthereumAddress(friendData.walletId) && !this.isAptosAddress(friendData.walletId)) {
+          console.error('❌ Invalid wallet address:', friendData.walletId)
+          throw new Error(`Invalid wallet address: ${friendData.walletId}. Must be a valid Ethereum or Aptos address.`)
         }
         friendWalletAddress = friendData.walletId
       }
@@ -319,9 +342,9 @@ class DatabaseService {
         throw new Error('Cannot create group with no members')
       }
 
-      // Ensure all member wallets are valid Ethereum addresses
+      // Ensure all member wallets are valid addresses (Ethereum or Aptos)
       const validMemberWallets = memberWallets.filter(wallet => {
-        const isValid = this.isEthereumAddress(wallet)
+        const isValid = this.isEthereumAddress(wallet) || this.isAptosAddress(wallet)
         if (!isValid) {
           console.warn(`⚠️ Skipping invalid wallet address: ${wallet}`)
         }
@@ -329,7 +352,7 @@ class DatabaseService {
       })
 
       if (validMemberWallets.length === 0) {
-        throw new Error('No valid Ethereum addresses found in member wallets')
+        throw new Error('No valid wallet addresses found in member wallets')
       }
 
       const creator = await this.createOrUpdateUser(creatorWallet)

@@ -1,19 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import PlaceholderWarning from "@/components/PlaceholderWarning";
-import { useAppKit } from "@reown/appkit/react";
-import { useAccount } from "wagmi";
+import WalletSelectionModal from "@/components/WalletSelectionModal";
+import { useMultiChainWallet } from "@/contexts/MultiChainWalletContext";
 import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   const [showCTA, setShowCTA] = useState(false);
-  const headline = "On-chain splits • ENS support";
-  const subline = "Track expenses, earn incentives";
+  const [showWalletModal, setShowWalletModal] = useState(false);
+  const headline = "On-chain splits • ENS/ANS support";
+  const subline = "Track expenses, earn incentives across chains";
 
-  const { open } = useAppKit();
-  const { isConnected } = useAccount();
+  const { isConnected, connectEVM, connectAptos } = useMultiChainWallet();
   const navigate = useNavigate();
 
   // no feature list; keep it simple
@@ -67,6 +67,31 @@ const Index = () => {
     }
   }, [isConnected, navigate]);
 
+  // Handle wallet selection
+  const handleTryNow = () => {
+    setShowWalletModal(true);
+  };
+
+  const handleSelectAptos = async () => {
+    setShowWalletModal(false);
+    try {
+      await connectAptos();
+    } catch (error) {
+      console.error('Failed to connect Aptos wallet:', error);
+      // You could show an error toast here
+    }
+  };
+
+  const handleSelectEVM = async () => {
+    setShowWalletModal(false);
+    try {
+      await connectEVM();
+    } catch (error) {
+      console.error('Failed to connect EVM wallet:', error);
+      // You could show an error toast here
+    }
+  };
+
   return (
     <div className="min-h-screen bg-black text-white overflow-hidden relative">
       <PlaceholderWarning />
@@ -110,7 +135,7 @@ const Index = () => {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4 }}
-                onClick={() => open?.()}
+                onClick={handleTryNow}
                 className="px-6 py-3 md:px-8 md:py-4 rounded-xl bg-yellow-400 text-black font-medium hover:bg-yellow-300 transition-colors"
               >
                 Try now
@@ -146,6 +171,14 @@ const Index = () => {
           </motion.div>
         </div>
       )}
+
+      {/* Wallet Selection Modal */}
+      <WalletSelectionModal
+        isOpen={showWalletModal}
+        onClose={() => setShowWalletModal(false)}
+        onSelectAptos={handleSelectAptos}
+        onSelectEVM={handleSelectEVM}
+      />
     </div>
   );
 };

@@ -12,14 +12,17 @@ datasource db {
 
 // User model - represents connected wallet users
 model User {
-  id            String   @id @default(cuid())
-  walletAddress String   @unique
-  ensName       String?  @unique
+  id            String      @id @default(cuid())
+  walletAddress String      @unique
+  chainType     ChainType   @default(EVM)
+  ensName       String?     @unique
+  ansName       String?     @unique  // Aptos Name Service
   displayName   String?
-  isENSResolved Boolean  @default(false)
-  lastSeen      DateTime @default(now())
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  isENSResolved Boolean     @default(false)
+  isANSResolved Boolean     @default(false)
+  lastSeen      DateTime    @default(now())
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 
   // Relations
   friendsAsUser    Friend[] @relation("UserFriends")
@@ -201,4 +204,11 @@ enum PaymentStatus {
   COMPLETED
   FAILED
   CANCELLED
+}
+
+enum ChainType {
+  EVM       // Ethereum, Polygon, Arbitrum, etc.
+  APTOS     // Aptos blockchain
+  SOLANA    // Future: Solana support
+  COSMOS    // Future: Cosmos ecosystem
 }

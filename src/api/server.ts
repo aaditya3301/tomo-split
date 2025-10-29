@@ -67,10 +67,13 @@ app.get('/api/health', async (req, res) => {
 // User Routes
 app.post('/api/users', async (req, res) => {
   try {
-    const { walletAddress, ensName, displayName } = req.body
-    const user = await databaseService.createOrUpdateUser(walletAddress, ensName, displayName)
+    const { walletAddress, ensName, displayName, chainType } = req.body
+    console.log('🔄 Creating/updating user:', { walletAddress, ensName, displayName, chainType })
+    
+    const user = await databaseService.createOrUpdateUser(walletAddress, ensName, displayName, chainType)
     res.json({ success: true, data: user })
   } catch (error: any) {
+    console.error('❌ Error creating/updating user:', error)
     res.status(500).json({ success: false, error: error.message })
   }
 })

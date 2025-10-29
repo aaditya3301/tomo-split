@@ -5,14 +5,19 @@ import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { ChevronUp, ChevronDown, Plus, Users, Loader2, CheckCircle, AlertCircle } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { alchemyENSService } from '@/services/alchemyENSService'
+import { useMultiChainWallet } from '@/contexts/MultiChainWalletContext'
+import { multiChainNameService } from '@/services/multiChainNameService'
 
 interface Friend {
   id: string
   walletId: string
-  resolvedAddress?: string // For ENS names, store the resolved address
-  resolvedENS?: string // For addresses, store the resolved ENS name
-  isENS?: boolean
+  resolvedAddress?: string // For ENS/ANS names, store the resolved address
+  resolvedENS?: string // For EVM addresses, store the resolved ENS name
+  resolvedANS?: string // For Aptos addresses, store the resolved ANS name
+  isENS?: boolean // Legacy - for ENS names
+  isANS?: boolean // For ANS names
+  isNameService?: boolean // General flag for any name service
+  chainType?: 'EVM' | 'APTOS'
   isSelected: boolean
 }
 
@@ -23,16 +28,22 @@ interface FriendsSectionProps {
   onAddFriend?: (friendData: any) => Promise<boolean>
 }
 
-// Cache for ENS resolutions to avoid repeated API calls
-const ensCache = new Map<string, { address: string | null; error?: string; timestamp: number }>()
-const CACHE_DURATION = 30 * 60 * 1000 // 30 minutes cache - increased from 5 minutes to prevent premature expiration
+// Cache for name service resolutions to avoid repeated API calls
+const nameResolutionCache = new Map<string, { 
+  address: string | null
+  name?: string
+  error?: string
+  timestamp: number 
+  chainType: 'EVM' | 'APTOS'
+}>()
+const CACHE_DURATION = 30 * 60 * 1000 // 30 minutes cache
 
 // Function to clear expired cache entries
 const clearExpiredCache = () => {
   const now = Date.now()
-  for (const [key, value] of ensCache.entries()) {
+  for (const [key, value] of nameResolutionCache.entries()) {
     if (now - value.timestamp > CACHE_DURATION) {
-      ensCache.delete(key)
+      nameResolutionCache.delete(key)
     }
   }
 }
@@ -43,11 +54,20 @@ const FriendsSection: React.FC<FriendsSectionProps> = ({
   onGroupCreate,
   onAddFriend
 }) => {
+  // Multi-chain wallet context
+  const { chainType, currentAccount } = useMultiChainWallet()
+  
   const [isAddFriendOpen, setIsAddFriendOpen] = useState(false)
   const [newFriend, setNewFriend] = useState({ walletId: '' })
-  const [ensError, setEnsError] = useState<string | null>(null)
-  const [isResolvingENS, setIsResolvingENS] = useState(false)
-  const [resolvedAddress, setResolvedAddress] = useState<string | null>(null)
+  const [nameServiceError, setNameServiceError] = useState<string | null>(null)
+  const [isResolvingName, setIsResolvingName] = useState(false)
+  const [resolvedData, setResolvedData] = useState<{
+    address?: string
+    name?: string
+    isNameService?: boolean
+    chainType?: 'EVM' | 'APTOS'
+    resolvedBy?: string
+  } | null>(null)
   const [resolutionTimestamp, setResolutionTimestamp] = useState<number>(0)
   
   // Use ref to store debounce timer
@@ -62,35 +82,104 @@ const FriendsSection: React.FC<FriendsSectionProps> = ({
     return () => clearInterval(cleanup)
   }, [])
 
-  // Function to get cached ENS resolution or fetch new one
-  const getCachedENSResolution = async (ensName: string): Promise<{ address: string | null; error?: string }> => {
-    const normalizedName = ensName.toLowerCase().trim()
+  // Function to try address validation and ENS resolution only
+  const tryAddressResolution = async (
+    input: string
+  ): Promise<{ 
+    address: string | null
+    name?: string
+    error?: string 
+    isNameService?: boolean
+    chainType?: 'EVM' | 'APTOS'
+    resolvedBy?: string
+  }> => {
+    const normalizedInput = input.toLowerCase().trim()
     const now = Date.now()
     
-    // Check cache first
-    const cached = ensCache.get(normalizedName)
-    if (cached && (now - cached.timestamp) < CACHE_DURATION) {
-      console.log(`🎯 Using cached ENS resolution for ${normalizedName}`)
-      return { address: cached.address, error: cached.error }
+    // Check if it's a direct EVM address
+    if (multiChainNameService.isValidAddress(input, 'EVM')) {
+      console.log(`✅ Detected valid EVM address: ${input}`)
+      return { 
+        address: input, 
+        isNameService: false, 
+        chainType: 'EVM',
+        resolvedBy: 'Direct EVM Address'
+      }
     }
     
-    // Cache miss or expired, fetch new resolution
-    console.log(`🔄 Fetching new ENS resolution for ${normalizedName}`)
-    try {
-      const result = await alchemyENSService.resolveENSToAddress(normalizedName)
+    // Check if it's a direct Aptos address
+    if (multiChainNameService.isValidAddress(input, 'APTOS')) {
+      console.log(`✅ Detected valid Aptos address: ${input}`)
+      return { 
+        address: input, 
+        isNameService: false, 
+        chainType: 'APTOS',
+        resolvedBy: 'Direct Aptos Address'
+      }
+    }
+    
+    // Only try ENS resolution for .eth names
+    if (normalizedInput.endsWith('.eth')) {
+      const cacheKey = `EVM:${normalizedInput}`
       
-      // Cache the result
-      ensCache.set(normalizedName, {
-        address: result.address,
-        error: result.error,
-        timestamp: now
-      })
+      // Check cache first
+      const cached = nameResolutionCache.get(cacheKey)
+      if (cached && (now - cached.timestamp) < CACHE_DURATION && cached.chainType === 'EVM') {
+        console.log(`🎯 Using cached ENS resolution for ${normalizedInput}`)
+        return { 
+          address: cached.address, 
+          name: cached.name,
+          error: cached.error,
+          isNameService: !!cached.name,
+          chainType: 'EVM',
+          resolvedBy: 'Cached ENS'
+        }
+      }
       
-      return result
-    } catch (error) {
-      const errorResult = { address: null, error: 'Resolution failed' }
-      ensCache.set(normalizedName, { ...errorResult, timestamp: now })
-      return errorResult
+      // Fetch new ENS resolution
+      console.log(`🔄 Trying ENS resolution for ${normalizedInput}`)
+      try {
+        const result = await multiChainNameService.processWalletInput(input, 'EVM')
+        
+        // Cache the result
+        nameResolutionCache.set(cacheKey, {
+          address: result.resolvedAddress || null,
+          name: result.resolvedName,
+          error: result.error,
+          timestamp: now,
+          chainType: 'EVM'
+        })
+        
+        return {
+          address: result.resolvedAddress || null,
+          name: result.resolvedName,
+          error: result.error,
+          isNameService: result.isNameService,
+          chainType: 'EVM',
+          resolvedBy: 'ENS Resolution'
+        }
+      } catch (error) {
+        const errorResult = { 
+          address: null, 
+          error: 'ENS resolution failed',
+          isNameService: false,
+          chainType: 'EVM' as const,
+          resolvedBy: 'Failed ENS'
+        }
+        nameResolutionCache.set(cacheKey, { 
+          ...errorResult, 
+          timestamp: now, 
+          chainType: 'EVM'
+        })
+        return errorResult
+      }
+    }
+    
+    // If we reach here, it's not a valid format
+    return { 
+      address: null, 
+      error: 'Please enter a valid EVM address, Aptos address, or ENS name (.eth)', 
+      isNameService: false 
     }
   }
 
@@ -98,8 +187,8 @@ const FriendsSection: React.FC<FriendsSectionProps> = ({
     setNewFriend({ walletId })
     
     // Clear previous state when input changes
-    setEnsError(null)
-    setResolvedAddress(null)
+    setNameServiceError(null)
+    setResolvedData(null)
     setResolutionTimestamp(0)
 
     // Clear any existing debounce timer
@@ -108,40 +197,52 @@ const FriendsSection: React.FC<FriendsSectionProps> = ({
       debounceTimerRef.current = null
     }
 
-    // Only resolve ENS names to show wallet address preview
-    // Add minimum length check to avoid resolving incomplete names
-    if (walletId.trim() && alchemyENSService.isENSName(walletId) && walletId.length >= 7) {
-      // Debounce ENS resolution by 800ms to avoid rapid API calls while typing
+    // Address/ENS resolution - support ETH addresses, Aptos addresses, ENS names (.eth)
+    const shouldResolve = walletId.trim() && walletId.length >= 7 && (
+      walletId.endsWith('.eth') || // ENS names only
+      walletId.startsWith('0x') || // Hex addresses (ETH/Aptos)
+      /^[a-fA-F0-9]{64}$/.test(walletId) // 64 char hex (Aptos without 0x)
+    )
+
+    if (shouldResolve) {
+      // Debounce name resolution by 800ms to avoid rapid API calls while typing
       debounceTimerRef.current = setTimeout(async () => {
-        setIsResolvingENS(true)
+        setIsResolvingName(true)
         const currentInput = walletId // Capture current input to prevent race conditions
         
         try {
-          const result = await getCachedENSResolution(walletId)
+          const result = await tryAddressResolution(walletId)
           
           // Only update state if the input hasn't changed (prevent race conditions)
           if (newFriend.walletId === currentInput || walletId === currentInput) {
-            if (result.error) {
-              setEnsError(result.error)
-              setResolvedAddress(null)
+            if (result.error && !result.address) {
+              setNameServiceError(result.error)
+              setResolvedData(null)
               setResolutionTimestamp(0)
             } else if (result.address) {
-              setResolvedAddress(result.address)
-              setEnsError(null) // Clear any previous errors
+              setResolvedData({
+                address: result.address,
+                name: result.name,
+                isNameService: result.isNameService,
+                chainType: result.chainType,
+                resolvedBy: result.resolvedBy
+              })
+              setNameServiceError(null) // Clear any previous errors
               setResolutionTimestamp(Date.now()) // Mark when resolution succeeded
-              console.log(`✅ ENS ${walletId} resolved to: ${result.address}`)
+              
+              console.log(`✅ ${result.resolvedBy}: ${walletId} → ${result.address}`)
             }
           }
         } catch (error) {
           // Only set error if input hasn't changed
           if (newFriend.walletId === currentInput || walletId === currentInput) {
-            setEnsError('Failed to resolve ENS name')
-            setResolvedAddress(null)
+            setNameServiceError('Failed to resolve address')
+            setResolvedData(null)
             setResolutionTimestamp(0)
-            console.error('ENS resolution error:', error)
+            console.error('Multi-chain resolution error:', error)
           }
         } finally {
-          setIsResolvingENS(false)
+          setIsResolvingName(false)
         }
       }, 800) // 800ms debounce delay
     }
@@ -161,158 +262,94 @@ const FriendsSection: React.FC<FriendsSectionProps> = ({
     
     const inputValue = newFriend.walletId.trim()
     
-    // Check if it's an ENS name
-    if (alchemyENSService.isENSName(inputValue)) {
-      // For ENS names: use cached resolution or resolve if not available
-      let finalResolvedAddress = resolvedAddress
-      
-      // If we have a recent successful resolution (within last 10 seconds), use it
-      const isRecentResolution = resolvedAddress && resolutionTimestamp && (Date.now() - resolutionTimestamp) < 10000
-      
-      if (!finalResolvedAddress || !isRecentResolution) {
-        setIsResolvingENS(true)
-        try {
-          const result = await getCachedENSResolution(inputValue)
-          if (result.error || !result.address) {
-            setEnsError(result.error || 'Failed to resolve ENS name')
-            setIsResolvingENS(false)
-            return
-          }
-          finalResolvedAddress = result.address
-          setResolvedAddress(finalResolvedAddress)
-          setEnsError(null) // Clear any previous errors when resolution succeeds
-          setResolutionTimestamp(Date.now())
-        } catch (error) {
-          setEnsError('Failed to resolve ENS name')
-          setIsResolvingENS(false)
+    // Process the wallet input using network-agnostic resolution
+    let finalResolvedData = resolvedData
+    
+    // If we have a recent successful resolution (within last 10 seconds), use it
+    const isRecentResolution = resolvedData && resolutionTimestamp && (Date.now() - resolutionTimestamp) < 10000
+    
+    if (!finalResolvedData || !isRecentResolution) {
+      setIsResolvingName(true)
+      try {
+        const result = await tryAddressResolution(inputValue)
+        if (result.error && !result.address) {
+          setNameServiceError(result.error)
+          setIsResolvingName(false)
           return
         }
-        setIsResolvingENS(false)
-      }
-      
-      // CRITICAL: Don't proceed if we don't have a resolved address
-      if (!finalResolvedAddress) {
-        setEnsError('Cannot add ENS friend without resolved address')
+        finalResolvedData = {
+          address: result.address || undefined,
+          name: result.name,
+          isNameService: result.isNameService,
+          chainType: result.chainType,
+          resolvedBy: result.resolvedBy
+        }
+        setResolvedData(finalResolvedData)
+        setNameServiceError(null) // Clear any previous errors when resolution succeeds
+        setResolutionTimestamp(Date.now())
+      } catch (error) {
+        setNameServiceError('Failed to resolve address on any network')
+        setIsResolvingName(false)
         return
       }
-      
-      const friendData = {
-        id: Date.now().toString(),
-        name: inputValue, // Use ENS name as display name
-        walletId: inputValue, // Store the ENS name
-        resolvedAddress: finalResolvedAddress, // Store the resolved wallet address
-        isENS: true,
-        isSelected: false
-      }
-      
-      // Use database service if available, otherwise update local state
-      if (onAddFriend) {
-        setIsResolvingENS(true)
-        const success = await onAddFriend(friendData)
-        setIsResolvingENS(false)
-        
-        if (success) {
-          console.log(`✅ Added ENS friend to database: ${inputValue} → ${finalResolvedAddress}`)
-          // Clear form on success
-          setNewFriend({ walletId: '' })
-          setEnsError(null)
-          setResolvedAddress(null)
-          setResolutionTimestamp(0)
-          setIsAddFriendOpen(false)
-          return // Exit early to avoid duplicate form clearing
-        } else {
-          setEnsError('Failed to add friend to database. Please check server logs.')
-          return
-        }
-      } else {
-        onFriendsUpdate([...friends, friendData])
-        console.log(`✅ Added ENS friend locally: ${inputValue} → ${finalResolvedAddress}`)
-      }
-      
-    } else if (alchemyENSService.isEthereumAddress(inputValue)) {
-      // For wallet addresses: store address as walletId, try to find ENS
-      setIsResolvingENS(true)
-      
-      try {
-        const ensName = await alchemyENSService.resolveAddressToENS(inputValue)
-        
-        const friendData = {
-          id: Date.now().toString(),
-          name: ensName || `${inputValue.slice(0, 6)}...${inputValue.slice(-4)}`, // Use ENS or truncated address as name
-          walletId: inputValue, // Store the wallet address
-          resolvedAddress: inputValue,
-          resolvedENS: ensName || undefined, // Store the resolved ENS name if found
-          isENS: false,
-          isSelected: false
-        }
-        
-        // Use database service if available, otherwise update local state
-        if (onAddFriend) {
-          const success = await onAddFriend(friendData)
-          setIsResolvingENS(false)
-          
-          if (success) {
-            console.log(`✅ Added address friend to database: ${inputValue}${ensName ? ` ← ${ensName}` : ''}`)
-            // Clear form on success
-            setNewFriend({ walletId: '' })
-            setEnsError(null)
-            setResolvedAddress(null)
-            setResolutionTimestamp(0)
-            setIsAddFriendOpen(false)
-            return // Exit early to avoid duplicate form clearing
-          } else {
-            setEnsError('Failed to add friend to database')
-            return
-          }
-        } else {
-          onFriendsUpdate([...friends, friendData])
-          console.log(`✅ Added address friend locally: ${inputValue}${ensName ? ` ← ${ensName}` : ''}`)
-        }
-        
-      } catch (error) {
-        // Still add the friend even if reverse ENS fails
-        const friendData = {
-          id: Date.now().toString(),
-          name: `${inputValue.slice(0, 6)}...${inputValue.slice(-4)}`, // Truncated address as name
-          walletId: inputValue,
-          resolvedAddress: inputValue,
-          isENS: false,
-          isSelected: false
-        }
-        
-        // Use database service if available, otherwise update local state
-        if (onAddFriend) {
-          const success = await onAddFriend(friendData)
-          if (success) {
-            console.log(`✅ Added address friend to database: ${inputValue} (no ENS found)`)
-            // Clear form on success
-            setNewFriend({ walletId: '' })
-            setEnsError(null)
-            setResolvedAddress(null)
-            setResolutionTimestamp(0)
-            setIsAddFriendOpen(false)
-            return // Exit early to avoid duplicate form clearing
-          } else {
-            setEnsError('Failed to add friend to database')
-            return
-          }
-        } else {
-          onFriendsUpdate([...friends, friendData])
-          console.log(`✅ Added address friend locally: ${inputValue} (no ENS found)`)
-        }
-      } finally {
-        setIsResolvingENS(false)
-      }
-      
-    } else {
-      setEnsError('Please enter a valid ENS name or Ethereum address')
+      setIsResolvingName(false)
+    }
+    
+    // Determine the final address and chain type to use
+    const finalAddress = finalResolvedData?.address
+    const detectedChainType = finalResolvedData?.chainType
+    
+    // CRITICAL: Don't proceed if we don't have a valid address
+    if (!finalAddress || !detectedChainType) {
+      setNameServiceError('Cannot add friend - address not found on any supported network (EVM/Aptos)')
       return
+    }
+    
+    // Create friend data based on detected chain type
+    const friendData = {
+      id: Date.now().toString(),
+      name: finalResolvedData?.name || `${finalAddress.slice(0, 6)}...${finalAddress.slice(-4)}`, // Use resolved name or truncated address
+      walletId: finalResolvedData?.isNameService ? inputValue : finalAddress, // Store name service input or address
+      resolvedAddress: finalAddress, // Store the resolved/validated address
+      ...(detectedChainType === 'EVM' && {
+        resolvedENS: finalResolvedData?.isNameService ? inputValue : finalResolvedData?.name,
+        isENS: finalResolvedData?.isNameService || false
+      }),
+      isNameService: finalResolvedData?.isNameService || false,
+      chainType: detectedChainType,
+      isSelected: false
+    }
+    
+    // Use database service if available, otherwise update local state
+    if (onAddFriend) {
+      setIsResolvingName(true)
+      const success = await onAddFriend(friendData)
+      setIsResolvingName(false)
+      
+      if (success) {
+        const serviceType = detectedChainType === 'EVM' ? 'ENS' : 'ANS'
+        console.log(`✅ Added ${detectedChainType} friend to database: ${inputValue} → ${finalAddress} (via ${finalResolvedData?.resolvedBy})`)
+        // Clear form on success
+        setNewFriend({ walletId: '' })
+        setNameServiceError(null)
+        setResolvedData(null)
+        setResolutionTimestamp(0)
+        setIsAddFriendOpen(false)
+        return // Exit early to avoid duplicate form clearing
+      } else {
+        setNameServiceError('Failed to add friend to database. Please check server logs.')
+        return
+      }
+    } else {
+      onFriendsUpdate([...friends, friendData])
+      console.log(`✅ Added ${detectedChainType} friend locally: ${inputValue} → ${finalAddress} (via ${finalResolvedData?.resolvedBy})`)
     }
     
     // Clear form
     setNewFriend({ walletId: '' })
-    setEnsError(null)
-    setResolvedAddress(null)
+    setNameServiceError(null)
+    setResolvedData(null)
+    setResolutionTimestamp(0)
     setIsAddFriendOpen(false)
   }
 
@@ -344,10 +381,12 @@ const FriendsSection: React.FC<FriendsSectionProps> = ({
       {/* Friends List Header */}
       <Card className="glass flex-1 flex flex-col min-h-0">
         <CardHeader className="flex-shrink-0 pb-4">
-          <CardTitle className="flex items-center space-x-2">
-            <Users className="h-5 w-5" />
-            <span>Friends</span>
-            <Badge variant="outline">{friends.length}</Badge>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Users className="h-5 w-5" />
+              <span>Friends</span>
+              <Badge variant="outline">{friends.length}</Badge>
+            </div>
           </CardTitle>
         </CardHeader>
         
@@ -372,50 +411,52 @@ const FriendsSection: React.FC<FriendsSectionProps> = ({
                     }
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">
-                      {friend.isENS ? friend.walletId : (friend.resolvedENS || (
-                        friend.walletId.length > 15 
-                          ? `${friend.walletId.slice(0, 8)}...${friend.walletId.slice(-6)}`
-                          : friend.walletId
-                      ))}
-                    </p>
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="font-medium truncate">
+                        {friend.isNameService ? friend.walletId : (
+                          friend.resolvedENS || (
+                            friend.walletId.length > 15 
+                              ? `${friend.walletId.slice(0, 8)}...${friend.walletId.slice(-6)}`
+                              : friend.walletId
+                          )
+                        )}
+                      </p>
+                      {friend.isENS && (
+                        <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-600 border-blue-500/30 flex-shrink-0">
+                          ENS
+                        </Badge>
+                      )}
+                    </div>
                     <div className="text-sm text-muted-foreground">
-                      {friend.isENS ? (
-                        // For ENS friends: show the ENS name with resolved address below
-                        <>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-xs">ENS Name</span>
-                            <Badge variant="outline" className="text-xs">
-                              ENS
-                            </Badge>
-                          </div>
-                          {friend.resolvedAddress && (
-                            <p className="text-xs text-muted-foreground/80 font-mono truncate">
-                              → {friend.resolvedAddress.slice(0, 6)}...{friend.resolvedAddress.slice(-4)}
-                            </p>
-                          )}
-                        </>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {!friend.isENS && friend.resolvedENS ? (
+                          <Badge variant="outline" className="text-xs bg-green-500/10 text-green-600 border-green-500/30">
+                            Has ENS
+                          </Badge>
+                        ) : !friend.isENS && friend.chainType && (
+                          <Badge variant="outline" className="text-xs">
+                            {friend.chainType === 'EVM' ? 'Ethereum' : 'Aptos'}
+                          </Badge>
+                        )}
+                      </div>
+                      
+                      {friend.isNameService ? (
+                        // For name service friends: show resolved address
+                        friend.resolvedAddress && (
+                          <p className="text-xs text-muted-foreground/80 font-mono truncate mt-1">
+                            → {friend.resolvedAddress.slice(0, 6)}...{friend.resolvedAddress.slice(-4)}
+                          </p>
+                        )
                       ) : (
-                        // For address friends: show the address with ENS name if available
+                        // For address friends: show name service if available
                         <>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-mono text-xs truncate">
-                              {friend.walletId.length > 10 
-                                ? `${friend.walletId.slice(0, 6)}...${friend.walletId.slice(-4)}`
-                                : friend.walletId
-                              }
-                            </span>
-                            {friend.resolvedENS && (
-                              <Badge variant="outline" className="text-xs bg-green-500/10 text-green-600 border-green-500/30 flex-shrink-0">
-                                Has ENS
-                              </Badge>
-                            )}
+                          <div className="font-mono text-xs truncate mt-1">
+                            {friend.walletId.length > 10 
+                              ? `${friend.walletId.slice(0, 6)}...${friend.walletId.slice(-4)}`
+                              : friend.walletId
+                            }
                           </div>
-                          {friend.resolvedENS && (
-                            <p className="text-xs text-green-600/80 truncate">
-                              ← {friend.resolvedENS}
-                            </p>
-                          )}
+
                         </>
                       )}
                     </div>
@@ -469,33 +510,40 @@ const FriendsSection: React.FC<FriendsSectionProps> = ({
                 <div className="space-y-2">
                   <div className="relative">
                     <Input
-                      placeholder="Wallet address or ENS name (e.g., vitalik.eth)"
+                      placeholder="Enter EVM address, Aptos address, or ENS name (.eth)"
                       value={newFriend.walletId}
                       onChange={(e) => handleWalletIdChange(e.target.value)}
-                      className={ensError ? 'border-destructive' : resolvedAddress ? 'border-green-500' : ''}
+                      className={nameServiceError ? 'border-destructive' : resolvedData?.address ? 'border-green-500' : ''}
                     />
-                    {isResolvingENS && (
+                    {isResolvingName && (
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                         <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                       </div>
                     )}
-                    {!isResolvingENS && resolvedAddress && (
+                    {!isResolvingName && resolvedData?.address && (
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                         <CheckCircle className="h-4 w-4 text-green-500" />
                       </div>
                     )}
-                    {!isResolvingENS && ensError && (
+                    {!isResolvingName && nameServiceError && (
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                         <AlertCircle className="h-4 w-4 text-destructive" />
                       </div>
                     )}
                   </div>
                   
-                  {resolvedAddress && (
+                  {resolvedData?.address && (
                     <div className="p-3 bg-green-500/10 border border-green-500/20 rounded text-sm">
                       <div className="flex items-center space-x-2 mb-2">
                         <CheckCircle className="h-3 w-3 text-green-500" />
-                        <span className="text-green-600 font-medium">ENS resolved successfully</span>
+                        <span className="text-green-600 font-medium">
+                          {resolvedData.resolvedBy || 'Address resolved successfully'}
+                        </span>
+                        {resolvedData.chainType && (
+                          <Badge variant="outline" className="text-xs">
+                            {resolvedData.chainType === 'EVM' ? 'Ethereum' : 'Aptos'}
+                          </Badge>
+                        )}
                       </div>
                       <div className="space-y-1">
                         <div className="text-xs">
@@ -503,20 +551,24 @@ const FriendsSection: React.FC<FriendsSectionProps> = ({
                           <div className="font-medium mt-1 break-all">{newFriend.walletId}</div>
                         </div>
                         <div className="text-xs">
-                          <span className="text-muted-foreground">Resolves to:</span>
+                          <span className="text-muted-foreground">
+                            {resolvedData.isNameService ? 'Resolves to' : 'Valid address'}:
+                          </span>
                           <div className="font-mono mt-1 break-all text-xs">
-                            {resolvedAddress.slice(0, 6)}...{resolvedAddress.slice(-4)}
+                            {resolvedData.address.slice(0, 6)}...{resolvedData.address.slice(-4)}
                           </div>
                         </div>
                       </div>
                     </div>
                   )}
+
+
                   
-                  {ensError && (
+                  {nameServiceError && (
                     <div className="p-2 bg-destructive/10 border border-destructive/20 rounded text-sm">
                       <div className="flex items-center space-x-2">
                         <AlertCircle className="h-3 w-3 text-destructive" />
-                        <span className="text-destructive">{ensError}</span>
+                        <span className="text-destructive">{nameServiceError}</span>
                       </div>
                     </div>
                   )}
@@ -525,10 +577,10 @@ const FriendsSection: React.FC<FriendsSectionProps> = ({
                 <div className="flex space-x-2">
                   <Button 
                     onClick={handleAddFriend}
-                    disabled={!newFriend.walletId || isResolvingENS || !!ensError}
+                    disabled={!newFriend.walletId || isResolvingName || !!nameServiceError}
                     className="flex-1"
                   >
-                    {isResolvingENS ? (
+                    {isResolvingName ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Resolving...
@@ -542,8 +594,8 @@ const FriendsSection: React.FC<FriendsSectionProps> = ({
                     onClick={() => {
                       setIsAddFriendOpen(false)
                       setNewFriend({ walletId: '' })
-                      setEnsError(null)
-                      setResolvedAddress(null)
+                      setNameServiceError(null)
+                      setResolvedData(null)
                     }}
                   >
                     Cancel

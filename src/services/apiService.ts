@@ -53,10 +53,10 @@ class ApiService {
   }
 
   // User Operations
-  async createOrUpdateUser(walletAddress: string, ensName?: string, displayName?: string) {
+  async createOrUpdateUser(walletAddress: string, ensName?: string, displayName?: string, chainType?: string) {
     return this.request('/users', {
       method: 'POST',
-      body: JSON.stringify({ walletAddress, ensName, displayName })
+      body: JSON.stringify({ walletAddress, ensName, displayName, chainType })
     })
   }
 

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAccount } from 'wagmi'
+import { useMultiChainWallet } from '@/contexts/MultiChainWalletContext'
 import { apiService } from '@/services/apiService'
 import { FriendData, GroupData, SplitData, UserDues } from '@/services/databaseService'
 
@@ -33,7 +34,15 @@ interface UseDatabaseReturn {
 }
 
 export const useDatabase = (): UseDatabaseReturn => {
-  const { address, isConnected } = useAccount()
+  // Multi-chain wallet context
+  const { currentAccount, isConnected: multiChainConnected } = useMultiChainWallet()
+  
+  // EVM fallback for backward compatibility
+  const { address: evmAddress, isConnected: evmConnected } = useAccount()
+  
+  // Use multi-chain address or fallback to EVM
+  const address = currentAccount?.address || evmAddress
+  const isConnected = multiChainConnected || evmConnected
   
   // State
   const [isLoading, setIsLoading] = useState(false)
@@ -50,10 +59,14 @@ export const useDatabase = (): UseDatabaseReturn => {
   // Create or update user when wallet connects
   useEffect(() => {
     if (address && isConnected) {
-      apiService.createOrUpdateUser(address)
+      // Pass chain type information if available
+      const chainType = currentAccount?.chainType || 'EVM'
+      console.log('🔄 Creating/updating user:', { address, chainType })
+      
+      apiService.createOrUpdateUser(address, undefined, undefined, chainType)
         .catch(err => console.warn('Failed to create/update user:', err))
     }
-  }, [address, isConnected])
+  }, [address, isConnected, currentAccount])
 
   // Refresh functions
   const refreshFriends = useCallback(async () => {

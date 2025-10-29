@@ -1,7 +1,6 @@
 import React, { ReactNode, useEffect } from 'react'
-import { useAccount } from 'wagmi'
-import { useAppKit } from '@reown/appkit/react'
 import { useNavigate } from 'react-router-dom'
+import { useMultiChainWallet } from '@/contexts/MultiChainWalletContext'
 import { Loader2 } from 'lucide-react'
 
 interface ProtectedRouteProps {
@@ -9,21 +8,17 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { isConnected, isConnecting } = useAccount()
-  const { open } = useAppKit()
+  const { isConnected, isLoading } = useMultiChainWallet()
   const navigate = useNavigate()
 
   useEffect(() => {
-    if (!isConnecting && !isConnected) {
-      // Show wallet modal after a short delay
-      const timer = setTimeout(() => {
-        open()
-      }, 500)
-      return () => clearTimeout(timer)
+    if (!isLoading && !isConnected) {
+      // Redirect to home page to select wallet
+      navigate('/')
     }
-  }, [isConnected, isConnecting, open])
+  }, [isConnected, isLoading, navigate])
 
-  if (isConnecting) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
@@ -41,7 +36,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
           <h2 className="text-2xl font-bold mb-4 text-white">Wallet Not Connected</h2>
           <p className="text-white/70 mb-6">Please connect your wallet to access the dashboard.</p>
           <button
-            onClick={() => open()}
+            onClick={() => navigate('/')}
             className="bg-gradient-to-r from-yellow-500 to-yellow-400 text-black font-bold px-6 py-3 rounded-lg hover:from-yellow-400 hover:to-yellow-300 transition-all duration-300 shadow-lg hover:shadow-xl"
           >
             Connect Wallet

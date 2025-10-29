@@ -5,6 +5,7 @@ import DashboardLayout from '@/layouts/DashboardLayout'
 import FriendsSection from '@/components/FriendsSection'
 import GroupModal from '@/components/GroupModal'
 import { useDatabase } from '@/hooks/useDatabase'
+import { useMultiChainWallet } from '@/contexts/MultiChainWalletContext'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertCircle, Loader2 } from 'lucide-react'
 // import StorageStatus from '@/components/StorageStatus'
@@ -35,6 +36,9 @@ interface Group {
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate()
+
+  // Multi-chain wallet context
+  const { currentAccount, chainType, isConnected: walletConnected } = useMultiChainWallet()
 
   // Database hook for all data operations
   const {
@@ -164,8 +168,18 @@ const Dashboard: React.FC = () => {
   //   return () => clearTimeout(timeoutId)
   // }, [friends, groups, handleSaveData])
 
+  // Debug wallet connection state
+  console.log('🔍 Dashboard Debug:', {
+    walletConnected,
+    currentAccount,
+    chainType,
+    address: currentAccount?.address,
+    isConnected,
+    isLoading
+  })
+
   // Show connection status if not connected
-  if (!isConnected) {
+  if (!walletConnected && !currentAccount) {
     return (
       <DashboardLayout
         title="Bill Splitting Dashboard"
@@ -191,26 +205,6 @@ const Dashboard: React.FC = () => {
       userDues={userDues}
     // splits={splits}
     >
-      {/* Database Connection Status */}
-      {isConnected && !error && !isLoading && friends.length === 0 && groups.length === 0 && (
-        <Alert className="mb-4" variant="default">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription className="flex items-center justify-between">
-            <span>🗄️ Connected to database. Start by adding friends to create groups and splits.</span>
-            <button
-              onClick={() => {
-                console.log('🔄 Manual refresh triggered')
-                refreshAll()
-              }}
-              disabled={isLoading}
-              className="ml-4 px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? '⏳' : '🔄'} Refresh
-            </button>
-          </AlertDescription>
-        </Alert>
-      )}
-
       {/* Database Error Alert */}
       {error && (
         <Alert className="mb-4" variant="destructive">
@@ -225,28 +219,6 @@ const Dashboard: React.FC = () => {
             </button>
           </AlertDescription>
         </Alert>
-      )}
-
-      {/* Loading Indicator */}
-      {isLoading && (
-        <div className="mb-4 p-3 rounded-lg border border-yellow-500/20 bg-yellow-500/5">
-          <div className="flex items-center">
-            <motion.img
-              src="/favicon.ico"
-              alt="Loading"
-              className="w-4 h-4 mr-2"
-              initial={{ scale: 0.8, opacity: 0.7 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ 
-                duration: 1.2, 
-                repeat: Infinity, 
-                repeatType: "reverse",
-                ease: "easeInOut"
-              }}
-            />
-            <span className="text-sm text-white/80">Loading data from database...</span>
-          </div>
-        </div>
       )}
 
       {/* Main Content with Left-Aligned Friends/Groups */}

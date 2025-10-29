@@ -3,6 +3,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { WalletProvider } from "@/contexts/WalletContext";
+import { AptosWalletProvider } from "@/contexts/AptosWalletContext";
+import { MultiChainWalletProvider } from "@/contexts/MultiChainWalletContext";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import GroupExpense from "./pages/GroupExpense";
@@ -14,33 +16,37 @@ const App = () => {
   try {
     return (
       <WalletProvider>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-              <Route 
-                path="/dashboard" 
-                element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/group/:groupId" 
-                element={
-                  <ProtectedRoute>
-                    <GroupExpense />
-                  </ProtectedRoute>
-                } 
-              />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+        <AptosWalletProvider>
+          <MultiChainWalletProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                      <Route 
+                        path="/dashboard" 
+                        element={
+                          <ProtectedRoute>
+                            <Dashboard />
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/group/:groupId" 
+                        element={
+                          <ProtectedRoute>
+                            <GroupExpense />
+                          </ProtectedRoute>
+                        } 
+                      />
+                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </BrowserRouter>
+            </TooltipProvider>
+          </MultiChainWalletProvider>
+        </AptosWalletProvider>
       </WalletProvider>
     );
   } catch (error) {

@@ -1,6 +1,7 @@
 import React, { ReactNode } from 'react'
 import { useAccount } from 'wagmi'
 import { useAppKit } from '@reown/appkit/react'
+import { useMultiChainWallet } from '@/contexts/MultiChainWalletContext'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Wallet } from 'lucide-react'
@@ -38,9 +39,23 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   userDues = null
   // splits = []
 }) => {
-  const { address, chain } = useAccount()
+  // Multi-chain wallet context
+  const { currentAccount, chainType, disconnect } = useMultiChainWallet()
+  
+  // EVM chain info fallback
+  const { chain } = useAccount()
   const { open } = useAppKit()
   const navigate = useNavigate()
+
+  // Determine network name based on chain type
+  const getNetworkName = () => {
+    if (chainType === 'APTOS') return 'Aptos'
+    if (chainType === 'EVM' && chain) return chain.name
+    return 'Connected'
+  }
+
+  // Get display address
+  const displayAddress = currentAccount?.address
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -63,19 +78,37 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               <div className="text-right hidden sm:block">
                 <p className="text-sm text-muted-foreground">Connected to</p>
                 <Badge variant="outline" className="font-mono">
-                  {chain?.name || 'Unknown Network'}
+                  {getNetworkName()}
                 </Badge>
+                {chainType && (
+                  <Badge variant="secondary" className="ml-2 text-xs">
+                    {chainType}
+                  </Badge>
+                )}
               </div>
-              <Button
-                variant="outline"
-                onClick={() => open()}
-                className="flex items-center space-x-2"
-              >
-                <Wallet className="h-4 w-4" />
-                <span className="font-mono">
-                  {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'No Address'}
-                </span>
-              </Button>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  onClick={chainType === 'EVM' ? () => open() : undefined}
+                  className="flex items-center space-x-2 cursor-default"
+                  disabled={chainType === 'APTOS'}
+                >
+                  <Wallet className="h-4 w-4" />
+                  <span className="font-mono">
+                    {displayAddress ? `${displayAddress.slice(0, 6)}...${displayAddress.slice(-4)}` : 'No Address'}
+                  </span>
+                </Button>
+                
+                {/* Disconnect Button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={disconnect}
+                  className="flex items-center space-x-1 border-border/20 hover:bg-muted/20 transition-colors"
+                >
+                  <span className="text-xs">Disconnect</span>
+                </Button>
+              </div>
               
               {/* Profile Dropdown */}
               <ProfileDropdown 
