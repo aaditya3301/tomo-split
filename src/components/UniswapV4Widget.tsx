@@ -309,19 +309,19 @@ export const UniswapV4Widget: React.FC<UniswapV4WidgetProps> = ({
 
   return (
     <Card className="w-full border-2 border-yellow-400/30 shadow-lg">
-      <CardHeader className="bg-gradient-to-r from-yellow-400/10 to-yellow-500/10 border-b border-yellow-400/30">
+      <CardHeader className="bg-gradient-to-r from-yellow-400/10 to-yellow-500/10 border-b border-yellow-400/30 py-3 sm:py-6">
         <CardTitle className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center">
-            <Zap className="h-4 w-4 text-black" />
+          <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center">
+            <Zap className="h-3 w-3 sm:h-4 sm:w-4 text-black" />
           </div>
-          <span>Uniswap V4 Swap</span>
-          <Badge variant="secondary" className="ml-auto">
-            <Sparkles className="h-3 w-3 mr-1" />
+          <span className="text-sm sm:text-base">Uniswap V4 Swap</span>
+          <Badge variant="secondary" className="ml-auto text-xs">
+            <Sparkles className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-1" />
             V4
           </Badge>
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-4 space-y-4">
+      <CardContent className="p-3 sm:p-4 space-y-3 sm:space-y-4">
         {/* Ethereum Network Info */}
         <Alert className="bg-blue-500/10 border-blue-500/20">
           <Zap className="h-4 w-4 text-blue-400" />
@@ -356,7 +356,7 @@ export const UniswapV4Widget: React.FC<UniswapV4WidgetProps> = ({
               </span>
             )}
           </div>
-          <div className="flex space-x-2">
+          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
             <Select
               value={fromToken.symbol}
               onValueChange={(value) => {
@@ -364,7 +364,7 @@ export const UniswapV4Widget: React.FC<UniswapV4WidgetProps> = ({
                 if (token) setFromToken(token)
               }}
             >
-              <SelectTrigger className="w-32">
+              <SelectTrigger className="w-full sm:w-32 h-12 sm:h-10">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -380,7 +380,7 @@ export const UniswapV4Widget: React.FC<UniswapV4WidgetProps> = ({
               placeholder="0.0"
               value={fromAmount}
               onChange={(e) => setFromAmount(e.target.value)}
-              className="flex-1 text-lg font-semibold"
+              className="flex-1 text-base sm:text-lg font-semibold h-12 sm:h-10"
             />
           </div>
         </div>
@@ -407,7 +407,7 @@ export const UniswapV4Widget: React.FC<UniswapV4WidgetProps> = ({
               </span>
             )}
           </div>
-          <div className="flex space-x-2">
+          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
             <Select
               value={toToken.symbol}
               onValueChange={(value) => {
@@ -415,7 +415,7 @@ export const UniswapV4Widget: React.FC<UniswapV4WidgetProps> = ({
                 if (token) setToToken(token)
               }}
             >
-              <SelectTrigger className="w-32">
+              <SelectTrigger className="w-full sm:w-32 h-12 sm:h-10">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -431,7 +431,7 @@ export const UniswapV4Widget: React.FC<UniswapV4WidgetProps> = ({
               placeholder="0.0"
               value={toAmount}
               readOnly
-              className="flex-1 text-lg font-semibold bg-muted"
+              className="flex-1 text-base sm:text-lg font-semibold bg-muted h-12 sm:h-10"
             />
           </div>
         </div>

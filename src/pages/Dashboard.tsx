@@ -182,15 +182,15 @@ const Dashboard: React.FC = () => {
   if (!walletConnected && !currentAccount) {
     return (
       <DashboardLayout
-        title="Bill Splitting Dashboard"
-        description="Connect your wallet to start splitting bills"
+        title="Dashboard"
+        description="Connect your wallet to get started"
         groups={[]}
       >
-        <div className="flex flex-col items-center justify-center py-12">
-          <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium mb-2">Wallet Not Connected</h3>
-          <p className="text-muted-foreground text-center">
-            Please connect your wallet to access the bill splitting dashboard.
+        <div className="flex flex-col items-center justify-center py-8 sm:py-12 px-4">
+          <AlertCircle className="h-8 w-8 sm:h-12 sm:w-12 text-muted-foreground mb-3 sm:mb-4" />
+          <h3 className="text-base sm:text-lg font-medium mb-2 text-center">Wallet Not Connected</h3>
+          <p className="text-muted-foreground text-center text-sm sm:text-base max-w-md">
+            Please connect your wallet to access the dashboard.
           </p>
         </div>
       </DashboardLayout>
@@ -199,8 +199,8 @@ const Dashboard: React.FC = () => {
 
   return (
     <DashboardLayout
-      title="Bill Splitting Dashboard"
-      description="Split bills with friends and manage group expenses"
+      title="Dashboard"
+      description="Manage expenses with friends and groups"
       groups={componentGroups}
       userDues={userDues}
     // splits={splits}
@@ -221,10 +221,10 @@ const Dashboard: React.FC = () => {
         </Alert>
       )}
 
-      {/* Main Content with Left-Aligned Friends/Groups */}
+      {/* Main Content Rearranged */}
       <div className="relative min-h-[calc(100vh-96px)] flex flex-col lg:flex-row">
-        {/* Fixed Left Panel - Friends Only */}
-        <div className="fixed left-0 top-24 w-80 h-[calc(100vh-96px)] p-4 bg-background/95 backdrop-blur-sm border-r border-border/20 overflow-hidden hidden lg:flex lg:flex-col z-10">
+        {/* Fixed Left Panel - Friends Only (Desktop) */}
+        <div className="fixed left-0 top-24 w-72 xl:w-80 h-[calc(100vh-96px)] p-3 lg:p-4 bg-background/95 backdrop-blur-sm border-r border-border/20 overflow-hidden hidden lg:flex lg:flex-col z-10">
           {/* Storage Status - COMMENTED OUT FOR NOW */}
           {/* <div className="mb-4 p-3 rounded-lg border border-border/20 bg-card/50">
             <StorageStatus
@@ -253,90 +253,49 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Mobile Friends Panel - Collapsible */}
-        <div className="lg:hidden">
-          <div className="p-4 border-b border-border/20 space-y-4">
-            {/* Mobile Storage Status - COMMENTED OUT FOR NOW */}
-            {/* <div className="p-3 rounded-lg border border-border/20 bg-card/50">
-              <StorageStatus
-                isConfigured={isConfigured}
-                isUploading={isUploading}
-                isLoading={isLoading}
-                lastUploadHash={lastUploadHash}
-                error={error}
-                onSave={handleSaveData}
-                onLoad={handleLoadData}
-                onClearError={clearError}
-              />
-            </div> */}
-
-            <details className="group">
-              <summary className="flex items-center justify-between cursor-pointer list-none">
-                <span className="font-medium">Friends & Groups</span>
-                <div className="w-5 h-5 transition-transform group-open:rotate-180">
-                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-full h-full">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-              </summary>
-              <div className="mt-4 max-h-96 overflow-y-auto">
-                <FriendsSection
-                  friends={componentFriends}
-                  onFriendsUpdate={handleFriendsUpdate}
-                  onGroupCreate={(selectedFriends) => {
-                    // Open group creation modal with selected friends
-                    setIsGroupModalOpen(true)
-                  }}
-                  onAddFriend={addFriend}
-                />
-              </div>
-            </details>
-          </div>
-        </div>
-
         {/* Main Dashboard Content - Right Side */}
-        <div className="lg:ml-80 flex-1 h-full flex flex-col">
-          {/* Active Groups Buttons */}
-          <div className="p-4 sm:p-6 pb-4 border-b border-border/20">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-medium text-muted-foreground">Active Groups</h3>
+        <div className="lg:ml-72 xl:ml-80 flex-1 h-full flex flex-col">
+          {/* 1. Active Groups Buttons - NOW AT TOP */}
+          <div className="p-3 sm:p-4 lg:p-6 pb-3 sm:pb-4 border-b border-border/20">
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <h3 className="text-xs sm:text-sm font-medium text-muted-foreground">Active Groups</h3>
               {groups.length > 0 && (
-                <div className="text-xs text-muted-foreground bg-muted/30 px-2 py-1 rounded">
+                <div className="text-xs text-muted-foreground bg-muted/30 px-2 py-1 rounded hidden sm:block">
                   {groups.length} group{groups.length !== 1 ? 's' : ''} available
                 </div>
               )}
             </div>
             {groups.length === 0 ? (
-              <div className="text-center py-4">
-                <p className="text-muted-foreground text-sm">
-                  No groups created yet. Form your first group from the friends panel.
+              <div className="text-center py-3 sm:py-4">
+                <p className="text-muted-foreground text-xs sm:text-sm px-2">
+                  No groups created yet. Form your first group from the friends panel below.
                 </p>
               </div>
             ) : (
-              <div className="flex flex-wrap gap-2">
+              <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
                 {componentGroups.map((group) => (
                   <button
                     key={group.id}
                     onClick={() => handleGroupClick(group.id)}
-                    className="group relative px-3 py-2 sm:px-4 sm:py-3 rounded-lg bg-gradient-to-r from-primary/20 to-accent/20 border border-primary/30 hover:border-primary/50 transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-primary/20"
+                    className="group relative px-2.5 py-1.5 sm:px-3 sm:py-2 lg:px-4 lg:py-3 rounded-lg bg-gradient-to-r from-primary/20 to-accent/20 border border-primary/30 hover:border-primary/50 active:border-primary/60 transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-primary/20 touch-manipulation"
                   >
-                    <div className="flex items-center space-x-2 sm:space-x-3">
-                      <div className="flex items-center space-x-1 sm:space-x-2">
-                        <div className="w-2 h-2 rounded-full bg-accent"></div>
-                        <span className="font-medium text-xs sm:text-sm truncate max-w-[150px] sm:max-w-none">{group.name}</span>
+                    <div className="flex items-center space-x-1.5 sm:space-x-2 lg:space-x-3">
+                      <div className="flex items-center space-x-1 sm:space-x-1.5 lg:space-x-2">
+                        <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-accent flex-shrink-0"></div>
+                        <span className="font-medium text-xs sm:text-sm truncate max-w-[100px] sm:max-w-[150px] lg:max-w-none">{group.name}</span>
                       </div>
-                      <div className="flex items-center space-x-1 text-xs text-muted-foreground">
-                        <span>{group.members.length}</span>
-                        <span>👥</span>
+                      <div className="flex items-center space-x-0.5 sm:space-x-1 text-xs text-muted-foreground">
+                        <span className="text-xs sm:text-xs">{group.members.length}</span>
+                        <span className="text-xs">👥</span>
                       </div>
-                      <div className="hidden sm:block text-xs text-muted-foreground font-mono">
+                      <div className="hidden lg:block text-xs text-muted-foreground font-mono">
                         {group.hash}
                       </div>
                     </div>
                     <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-primary/10 to-accent/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
 
-                    {/* Tooltip on hover */}
-                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-card border border-border rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                    {/* Tooltip on hover - Hidden on mobile */}
+                    <div className="hidden sm:block absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-card border border-border rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
                       Click to create split • Members: {group.members.join(', ')}
                     </div>
                   </button>
@@ -345,31 +304,75 @@ const Dashboard: React.FC = () => {
             )}
           </div>
 
-          {/* Welcome Content */}
-          <div className="flex-1 flex items-center justify-center p-4 sm:p-6">
-            <div className="text-center space-y-4 sm:space-y-6 w-full max-w-4xl">
-              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold gradient-text">Welcome!</h2>
-              <p className="text-base sm:text-xl text-muted-foreground px-4">
-                Manage your friends using the left panel and access your groups via the buttons above.
+          {/* 2. Welcome Content - IN THE MIDDLE */}
+          <div className="flex-1 flex items-center justify-center p-3 sm:p-4 lg:p-6 -mt-8 sm:-mt-12 lg:-mt-16">
+            <div className="text-center space-y-3 sm:space-y-4 lg:space-y-6 w-full max-w-4xl">
+              <h2 className="text-2xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold gradient-text">Welcome!</h2>
+              <p className="text-sm sm:text-base lg:text-xl text-muted-foreground px-2 sm:px-4">
+                <span className="hidden lg:inline">Manage your friends using the left panel and access your groups via the buttons above.</span>
+                <span className="lg:hidden">Use the collapsible panel below to manage friends and create groups.</span>
               </p>
-              <div className="space-y-3 sm:space-y-4 text-left max-w-2xl mx-auto px-4">
-                <div className="flex items-start space-x-3">
-                  <div className="w-2 h-2 rounded-full bg-accent mt-1.5 flex-shrink-0"></div>
-                  <span className="text-sm sm:text-base">Add friends using wallet addresses or ENS names</span>
+              <div className="space-y-2 sm:space-y-3 lg:space-y-4 text-left max-w-2xl mx-auto px-2 sm:px-4">
+                <div className="flex items-start space-x-2 sm:space-x-3">
+                  <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-accent mt-1.5 sm:mt-2 flex-shrink-0"></div>
+                  <span className="text-xs sm:text-sm lg:text-base">Add friends using wallet addresses or ENS names</span>
                 </div>
-                <div className="flex items-start space-x-3">
-                  <div className="w-2 h-2 rounded-full bg-accent mt-1.5 flex-shrink-0"></div>
-                  <span className="text-sm sm:text-base">Select friends to form groups</span>
+                <div className="flex items-start space-x-2 sm:space-x-3">
+                  <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-accent mt-1.5 sm:mt-2 flex-shrink-0"></div>
+                  <span className="text-xs sm:text-sm lg:text-base">Select friends to form groups</span>
                 </div>
-                <div className="flex items-start space-x-3">
-                  <div className="w-2 h-2 rounded-full bg-accent mt-1.5 flex-shrink-0"></div>
-                  <span className="text-sm sm:text-base">Click group buttons above to create bill splits</span>
+                <div className="flex items-start space-x-2 sm:space-x-3">
+                  <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-accent mt-1.5 sm:mt-2 flex-shrink-0"></div>
+                  <span className="text-xs sm:text-sm lg:text-base">Click group buttons above to create bill splits</span>
                 </div>
-                <div className="flex items-start space-x-3">
-                  <div className="w-2 h-2 rounded-full bg-accent mt-1.5 flex-shrink-0"></div>
-                  <span className="text-sm sm:text-base">Enjoy seamless bill splitting with friends</span>
+                <div className="flex items-start space-x-2 sm:space-x-3">
+                  <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-accent mt-1.5 sm:mt-2 flex-shrink-0"></div>
+                  <span className="text-xs sm:text-sm lg:text-base">Enjoy seamless bill splitting with friends</span>
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* 3. Mobile Friends Panel - NOW AT BOTTOM */}
+          <div className="lg:hidden border-t border-border/20">
+            <div className="p-2 sm:p-3">
+              {/* Mobile Storage Status - COMMENTED OUT FOR NOW */}
+              {/* <div className="p-3 rounded-lg border border-border/20 bg-card/50">
+                <StorageStatus
+                  isConfigured={isConfigured}
+                  isUploading={isUploading}
+                  isLoading={isLoading}
+                  lastUploadHash={lastUploadHash}
+                  error={error}
+                  onSave={handleSaveData}
+                  onLoad={handleLoadData}
+                  onClearError={clearError}
+                />
+              </div> */}
+
+              <details className="group">
+                <summary className="flex items-center justify-between cursor-pointer list-none py-2 px-2 -mx-2 rounded-md hover:bg-muted/20 transition-colors touch-manipulation">
+                  <span className="font-medium text-sm">Friends & Groups</span>
+                  <div className="w-4 h-4 transition-transform group-open:rotate-180 flex-shrink-0">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-full h-full">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </summary>
+                <div className="mt-2 max-h-64 sm:max-h-72 overflow-y-auto">
+                  <div className="scale-95 origin-top">
+                    <FriendsSection
+                      friends={componentFriends}
+                      onFriendsUpdate={handleFriendsUpdate}
+                      onGroupCreate={(selectedFriends) => {
+                        // Open group creation modal with selected friends
+                        setIsGroupModalOpen(true)
+                      }}
+                      onAddFriend={addFriend}
+                    />
+                  </div>
+                </div>
+              </details>
             </div>
           </div>
         </div>

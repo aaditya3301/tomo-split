@@ -63,39 +63,45 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       
       {/* Fixed Header */}
       <div className="fixed top-0 left-0 right-0 z-50 glass border-b border-border/20">
-        <div className="max-w-full mx-auto px-6 py-4">
+        <div className="max-w-full mx-auto px-3 sm:px-4 lg:px-6 py-3 sm:py-4">
           <div className="flex items-center justify-between">
             {/* Left - Title */}
-            <div className="flex items-center space-x-4">
-              <div>
-                <h1 className="text-xl font-bold gradient-text">{title}</h1>
-                <p className="text-sm text-muted-foreground">{description}</p>
+            <div className="flex items-center space-x-2 sm:space-x-4 flex-1 min-w-0">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-base sm:text-lg lg:text-xl font-bold gradient-text truncate">{title}</h1>
+                <p className="text-xs sm:text-sm text-muted-foreground truncate hidden sm:block">{description}</p>
               </div>
             </div>
             
             {/* Right - Profile & Wallet Info */}
-            <div className="flex items-center space-x-4">
-              <div className="text-right hidden sm:block">
+            <div className="flex items-center space-x-1 sm:space-x-2 lg:space-x-4 flex-shrink-0">
+              {/* Network Info - Hidden on mobile */}
+              <div className="text-right hidden lg:block">
                 <p className="text-sm text-muted-foreground">Connected to</p>
-                <Badge variant="outline" className="font-mono">
-                  {getNetworkName()}
-                </Badge>
-                {chainType && (
-                  <Badge variant="secondary" className="ml-2 text-xs">
-                    {chainType}
+                <div className="flex items-center space-x-2">
+                  <Badge variant="outline" className="font-mono text-xs">
+                    {getNetworkName()}
                   </Badge>
-                )}
+                  {chainType && (
+                    <Badge variant="secondary" className="text-xs">
+                      {chainType}
+                    </Badge>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center space-x-2">
+              
+              {/* Wallet Button */}
+              <div className="flex items-center space-x-1 sm:space-x-2">
                 <Button
                   variant="outline"
+                  size="sm"
                   onClick={chainType === 'EVM' ? () => open() : undefined}
-                  className="flex items-center space-x-2 cursor-default"
+                  className="flex items-center space-x-1 sm:space-x-2 cursor-default p-2 sm:px-3 sm:py-2 touch-manipulation"
                   disabled={chainType === 'APTOS'}
                 >
-                  <Wallet className="h-4 w-4" />
-                  <span className="font-mono">
-                    {displayAddress ? `${displayAddress.slice(0, 6)}...${displayAddress.slice(-4)}` : 'No Address'}
+                  <Wallet className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                  <span className="font-mono text-xs sm:text-sm hidden xs:inline">
+                    {displayAddress ? `${displayAddress.slice(0, 4)}...${displayAddress.slice(-3)}` : 'No Address'}
                   </span>
                 </Button>
                 
@@ -104,7 +110,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                   variant="outline"
                   size="sm"
                   onClick={disconnect}
-                  className="flex items-center space-x-1 border-border/20 hover:bg-muted/20 transition-colors"
+                  className="flex items-center space-x-1 border-border/20 hover:bg-muted/20 transition-colors touch-manipulation px-2 sm:px-3"
                 >
                   <span className="text-xs">Disconnect</span>
                 </Button>

@@ -117,17 +117,17 @@ const Index = () => {
       </div>
           
       <div className="relative z-10 min-h-screen flex flex-col">
-        <section className="flex-1 px-6">
+        <section className="flex-1 px-4 sm:px-6">
           <div className="max-w-6xl mx-auto h-full">
-            <div className="absolute left-6 bottom-28 md:left-12 md:bottom-24">
+            <div className="absolute left-4 bottom-20 sm:left-6 sm:bottom-28 md:left-12 md:bottom-24 right-4 sm:right-6 md:right-auto">
               
             {/* Clean static text */}
-            <div className="mb-3">
-              <h1 className="text-4xl md:text-7xl font-light text-white tracking-tight">
+            <div className="mb-4 sm:mb-6">
+              <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-light text-white tracking-tight leading-tight">
                 {headline}
               </h1>
             </div>
-            <p className="text-lg md:text-2xl text-white/80 mb-8">
+            <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/80 mb-6 sm:mb-8 max-w-lg">
               {subline}
             </p>
             {showCTA && (
@@ -136,7 +136,7 @@ const Index = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4 }}
                 onClick={handleTryNow}
-                className="px-6 py-3 md:px-8 md:py-4 rounded-xl bg-yellow-400 text-black font-medium hover:bg-yellow-300 transition-colors"
+                className="w-full sm:w-auto px-8 py-4 sm:px-6 sm:py-3 md:px-8 md:py-4 rounded-xl bg-yellow-400 text-black font-medium hover:bg-yellow-300 active:bg-yellow-500 transition-colors text-base sm:text-sm md:text-base touch-manipulation"
               >
                 Try now
               </motion.button>

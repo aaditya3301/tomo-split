@@ -185,14 +185,14 @@ export const MultiChainPaymentWidget: React.FC<MultiChainPaymentProps> = ({
   if (!isConnected || !currentAccount) {
     return (
       <Card className="w-full border-2 border-yellow-400/30 shadow-lg">
-        <CardContent className="p-8 text-center">
-          <div className="space-y-4">
-            <div className="w-16 h-16 mx-auto bg-yellow-500/20 rounded-full flex items-center justify-center">
-              <Wallet className="h-8 w-8 text-yellow-400" />
+        <CardContent className="p-4 sm:p-8 text-center">
+          <div className="space-y-3 sm:space-y-4">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto bg-yellow-500/20 rounded-full flex items-center justify-center">
+              <Wallet className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-400" />
             </div>
             <div>
-              <h3 className="font-semibold text-lg">Connect Your Wallet</h3>
-              <p className="text-sm text-muted-foreground mt-2">
+              <h3 className="font-semibold text-base sm:text-lg">Connect Your Wallet</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-2">
                 Connect your Aptos or Ethereum wallet to start making payments
               </p>
             </div>
@@ -206,14 +206,14 @@ export const MultiChainPaymentWidget: React.FC<MultiChainPaymentProps> = ({
   if (availableMethods.length === 0) {
     return (
       <Card className="w-full border-2 border-yellow-400/30 shadow-lg">
-        <CardContent className="p-8 text-center">
-          <div className="space-y-4">
-            <div className="w-16 h-16 mx-auto bg-red-500/20 rounded-full flex items-center justify-center">
-              <AlertCircle className="h-8 w-8 text-red-400" />
+        <CardContent className="p-4 sm:p-8 text-center">
+          <div className="space-y-3 sm:space-y-4">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto bg-red-500/20 rounded-full flex items-center justify-center">
+              <AlertCircle className="h-6 w-6 sm:h-8 sm:w-8 text-red-400" />
             </div>
             <div>
-              <h3 className="font-semibold text-lg">No Payment Methods Available</h3>
-              <p className="text-sm text-muted-foreground mt-2">
+              <h3 className="font-semibold text-base sm:text-lg">No Payment Methods Available</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-2">
                 No supported payment methods for your current wallet connection
               </p>
             </div>
@@ -225,20 +225,20 @@ export const MultiChainPaymentWidget: React.FC<MultiChainPaymentProps> = ({
 
   return (
     <Card className="w-full border-2 border-yellow-400/30 shadow-lg">
-      <CardHeader className="bg-gradient-to-r from-yellow-400/10 to-yellow-500/10 border-b border-yellow-400/30">
+      <CardHeader className="bg-gradient-to-r from-yellow-400/10 to-yellow-500/10 border-b border-yellow-400/30 py-3 sm:py-6">
         <CardTitle className="flex items-center">
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center">
-              <ArrowRight className="h-4 w-4 text-black" />
+            <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center">
+              <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 text-black" />
             </div>
-            <span>Multi-Chain Payment</span>
+            <span className="text-sm sm:text-base">Multi-Chain Payment</span>
           </div>
         </CardTitle>
       </CardHeader>
       
-      <CardContent className="p-6 space-y-6">        
+      <CardContent className="p-3 sm:p-6 space-y-3 sm:space-y-6">        
         {/* Selected Payment Interface */}
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {renderPaymentInterface()}
         </div>
       </CardContent>

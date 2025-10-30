@@ -380,29 +380,29 @@ const FriendsSection: React.FC<FriendsSectionProps> = ({
     <div className="h-full flex flex-col">
       {/* Friends List Header */}
       <Card className="glass flex-1 flex flex-col min-h-0">
-        <CardHeader className="flex-shrink-0 pb-4">
-          <CardTitle className="flex items-center justify-between">
+        <CardHeader className="flex-shrink-0 pb-2 pt-3">
+          <CardTitle className="flex items-center justify-between text-sm">
             <div className="flex items-center space-x-2">
-              <Users className="h-5 w-5" />
+              <Users className="h-4 w-4" />
               <span>Friends</span>
-              <Badge variant="outline">{friends.length}</Badge>
+              <Badge variant="outline" className="text-xs px-1.5 py-0.5">{friends.length}</Badge>
             </div>
           </CardTitle>
         </CardHeader>
         
-        <CardContent className="flex-1 flex flex-col min-h-0 p-4 pt-0">
+        <CardContent className="flex-1 flex flex-col min-h-0 p-3 pt-0">
           {/* Friends List - Scrollable Container */}
           <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin smooth-scroll">
-            <div className="space-y-3 pr-3 pb-2">
+            <div className="space-y-2 pr-2 pb-2">
             {friends.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">
+              <p className="text-muted-foreground text-center py-3 text-xs">
                 No friends added yet. Add your first friend below!
               </p>
             ) : (
               friends.map((friend) => (
                 <div 
                   key={friend.id} 
-                  className="flex items-start space-x-3 p-4 rounded-lg border border-border/20 hover:bg-muted/30 transition-colors min-w-0"
+                  className="flex items-start space-x-2 p-2.5 rounded-md border border-border/20 hover:bg-muted/30 transition-colors min-w-0"
                 >
                   <Checkbox
                     checked={friend.isSelected}
@@ -411,30 +411,30 @@ const FriendsSection: React.FC<FriendsSectionProps> = ({
                     }
                   />
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="font-medium truncate">
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <p className="font-medium truncate text-sm">
                         {friend.isNameService ? friend.walletId : (
                           friend.resolvedENS || (
                             friend.walletId.length > 15 
-                              ? `${friend.walletId.slice(0, 8)}...${friend.walletId.slice(-6)}`
+                              ? `${friend.walletId.slice(0, 6)}...${friend.walletId.slice(-4)}`
                               : friend.walletId
                           )
                         )}
                       </p>
                       {friend.isENS && (
-                        <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-600 border-blue-500/30 flex-shrink-0">
+                        <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-600 border-blue-500/30 flex-shrink-0 px-1 py-0">
                           ENS
                         </Badge>
                       )}
                     </div>
-                    <div className="text-sm text-muted-foreground">
-                      <div className="flex items-center gap-2 flex-wrap">
+                    <div className="text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1.5 flex-wrap">
                         {!friend.isENS && friend.resolvedENS ? (
-                          <Badge variant="outline" className="text-xs bg-green-500/10 text-green-600 border-green-500/30">
+                          <Badge variant="outline" className="text-xs bg-green-500/10 text-green-600 border-green-500/30 px-1 py-0">
                             Has ENS
                           </Badge>
                         ) : !friend.isENS && friend.chainType && (
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-xs px-1 py-0">
                             {friend.chainType === 'EVM' ? 'Ethereum' : 'Aptos'}
                           </Badge>
                         )}
@@ -443,14 +443,14 @@ const FriendsSection: React.FC<FriendsSectionProps> = ({
                       {friend.isNameService ? (
                         // For name service friends: show resolved address
                         friend.resolvedAddress && (
-                          <p className="text-xs text-muted-foreground/80 font-mono truncate mt-1">
+                          <p className="text-xs text-muted-foreground/80 font-mono truncate mt-0.5">
                             → {friend.resolvedAddress.slice(0, 6)}...{friend.resolvedAddress.slice(-4)}
                           </p>
                         )
                       ) : (
                         // For address friends: show name service if available
                         <>
-                          <div className="font-mono text-xs truncate mt-1">
+                          <div className="font-mono text-xs truncate mt-0.5">
                             {friend.walletId.length > 10 
                               ? `${friend.walletId.slice(0, 6)}...${friend.walletId.slice(-4)}`
                               : friend.walletId

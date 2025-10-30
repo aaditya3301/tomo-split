@@ -89,57 +89,57 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto bg-black border-yellow-500">
-        <DialogHeader className="border-b border-yellow-500/30 pb-4">
-          <DialogTitle className="flex items-center space-x-3 text-white">
-            <div className="w-10 h-10 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center shadow-lg">
-              <DollarSign className="h-5 w-5 text-black" />
+      <DialogContent className="w-[95%] sm:max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto bg-black border-yellow-500">
+        <DialogHeader className="border-b border-yellow-500/30 pb-3 sm:pb-4">
+          <DialogTitle className="flex items-center space-x-2 sm:space-x-3 text-white">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center shadow-lg">
+              <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-black" />
             </div>
-            <span className="text-xl font-bold">Process Payment</span>
+            <span className="text-lg sm:text-xl font-bold">Process Payment</span>
           </DialogTitle>
-          <DialogDescription className="text-white/70">
+          <DialogDescription className="text-white/70 text-sm sm:text-base">
             Choose your preferred payment method for cross-chain transactions
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {/* Transaction Details */}
-          <div className="p-6 bg-yellow-500/10 rounded-xl border border-yellow-500/30 shadow-lg">
-            <div className="space-y-4">
+          <div className="p-4 sm:p-6 bg-yellow-500/10 rounded-xl border border-yellow-500/30 shadow-lg">
+            <div className="space-y-3 sm:space-y-4">
               {/* Group Info */}
               <div className="flex items-center justify-between">
-                <Label className="text-sm text-white/70 font-medium">Group</Label>
-                <Badge className="bg-yellow-500/30 text-yellow-300 border-yellow-500">{groupName}</Badge>
+                <Label className="text-xs sm:text-sm text-white/70 font-medium">Group</Label>
+                <Badge className="bg-yellow-500/30 text-yellow-300 border-yellow-500 text-xs sm:text-sm">{groupName}</Badge>
               </div>
 
               <Separator />
 
               {/* From */}
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-500 to-yellow-600 border-2 border-yellow-400 flex items-center justify-center shadow-lg">
-                  <User className="h-5 w-5 text-black" />
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-yellow-500 to-yellow-600 border-2 border-yellow-400 flex items-center justify-center shadow-lg">
+                  <User className="h-4 w-4 sm:h-5 sm:w-5 text-black" />
                 </div>
-                <div className="flex-1">
-                  <Label className="text-sm text-white/70 font-medium">From (You)</Label>
-                  <p className="font-bold text-white text-lg">{fromMemberName}</p>
+                <div className="flex-1 min-w-0">
+                  <Label className="text-xs sm:text-sm text-white/70 font-medium">From (You)</Label>
+                  <p className="font-bold text-white text-sm sm:text-lg truncate">{fromMemberName}</p>
                 </div>
               </div>
 
               {/* Arrow */}
               <div className="flex justify-center">
-                <div className="p-2 bg-yellow-400/20 rounded-full">
-                  <ArrowRightLeft className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+                <div className="p-1.5 sm:p-2 bg-yellow-400/20 rounded-full">
+                  <ArrowRightLeft className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-600 dark:text-yellow-400" />
                 </div>
               </div>
 
               {/* To */}
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-500 border-2 border-yellow-300 flex items-center justify-center shadow-lg">
-                  <User className="h-5 w-5 text-black" />
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-500 border-2 border-yellow-300 flex items-center justify-center shadow-lg">
+                  <User className="h-4 w-4 sm:h-5 sm:w-5 text-black" />
                 </div>
-                <div className="flex-1">
-                  <Label className="text-sm text-white/70 font-medium">To</Label>
-                  <p className="font-bold text-white text-lg">{toMemberName}</p>
+                <div className="flex-1 min-w-0">
+                  <Label className="text-xs sm:text-sm text-white/70 font-medium">To</Label>
+                  <p className="font-bold text-white text-sm sm:text-lg truncate">{toMemberName}</p>
                 </div>
               </div>
 
@@ -147,34 +147,34 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
               {/* Amount */}
               <div className="flex items-center justify-between">
-                <Label className="text-lg text-white font-bold">Amount to Pay</Label>
+                <Label className="text-sm sm:text-lg text-white font-bold">Amount to Pay</Label>
                 <div className="text-right">
-                  <p className="text-3xl font-black text-yellow-400">
+                  <p className="text-2xl sm:text-3xl font-black text-yellow-400">
                     ${transaction.amount.toFixed(2)}
                   </p>
-                  <p className="text-sm text-white/60 font-medium">USD</p>
+                  <p className="text-xs sm:text-sm text-white/60 font-medium">USD</p>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Payment Method Display - Auto-Selected */}
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             <div className="text-center">
-              <div className="text-sm font-medium text-muted-foreground mb-2">
+              <div className="text-xs sm:text-sm font-medium text-muted-foreground mb-2">
                 Auto-Selected Payment Method
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-1 sm:gap-2">
               {/* APT to USDC Button */}
               <div
-                className={`h-auto p-3 flex flex-col space-y-2 transition-all duration-200 border rounded-md cursor-default ${
+                className={`h-auto p-2 sm:p-3 flex flex-col space-y-1 sm:space-y-2 transition-all duration-200 border rounded-md cursor-default ${
                   autoSelectedMethod === 'aptos-native' 
                     ? 'bg-gradient-to-r from-green-400 to-green-500 text-white border-green-400 shadow-lg' 
                     : 'border-border bg-muted/30 opacity-50'
                 }`}
               >
-                <Zap className={`h-5 w-5 mx-auto ${autoSelectedMethod === 'aptos-native' ? 'text-white' : 'text-green-500'}`} />
+                <Zap className={`h-4 w-4 sm:h-5 sm:w-5 mx-auto ${autoSelectedMethod === 'aptos-native' ? 'text-white' : 'text-green-500'}`} />
                 <div className="text-center">
                   <div className="font-semibold text-xs">APT to USDC</div>
                   <div className={`text-xs ${autoSelectedMethod === 'aptos-native' ? 'text-white/70' : 'text-muted-foreground'}`}>
@@ -188,13 +188,13 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
               {/* Aptos to EVM Button */}
               <div
-                className={`h-auto p-3 flex flex-col space-y-2 transition-all duration-200 border rounded-md cursor-default ${
+                className={`h-auto p-2 sm:p-3 flex flex-col space-y-1 sm:space-y-2 transition-all duration-200 border rounded-md cursor-default ${
                   autoSelectedMethod === 'aptos-to-evm' 
                     ? 'bg-gradient-to-r from-purple-400 to-purple-500 text-white border-purple-400 shadow-lg' 
                     : 'border-border bg-muted/30 opacity-50'
                 }`}
               >
-                <ArrowRightLeft className={`h-5 w-5 mx-auto ${autoSelectedMethod === 'aptos-to-evm' ? 'text-white' : 'text-purple-500'}`} />
+                <ArrowRightLeft className={`h-4 w-4 sm:h-5 sm:w-5 mx-auto ${autoSelectedMethod === 'aptos-to-evm' ? 'text-white' : 'text-purple-500'}`} />
                 <div className="text-center">
                   <div className="font-semibold text-xs">Aptos to EVM</div>
                   <div className={`text-xs ${autoSelectedMethod === 'aptos-to-evm' ? 'text-white/70' : 'text-muted-foreground'}`}>
@@ -208,13 +208,13 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
               {/* ETH to USDC Button */}
               <div
-                className={`h-auto p-3 flex flex-col space-y-2 transition-all duration-200 border rounded-md cursor-default ${
+                className={`h-auto p-2 sm:p-3 flex flex-col space-y-1 sm:space-y-2 transition-all duration-200 border rounded-md cursor-default ${
                   autoSelectedMethod === 'evm-native' 
                     ? 'bg-gradient-to-r from-blue-400 to-blue-500 text-white border-blue-400 shadow-lg' 
                     : 'border-border bg-muted/30 opacity-50'
                 }`}
               >
-                <ArrowRightLeft className={`h-5 w-5 mx-auto ${autoSelectedMethod === 'evm-native' ? 'text-white' : 'text-blue-500'}`} />
+                <ArrowRightLeft className={`h-4 w-4 sm:h-5 sm:w-5 mx-auto ${autoSelectedMethod === 'evm-native' ? 'text-white' : 'text-blue-500'}`} />
                 <div className="text-center">
                   <div className="font-semibold text-xs">ETH to USDC</div>
                   <div className={`text-xs ${autoSelectedMethod === 'evm-native' ? 'text-white/70' : 'text-muted-foreground'}`}>

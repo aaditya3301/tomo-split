@@ -460,50 +460,50 @@ const GroupExpense: React.FC = () => {
     <div className="min-h-screen bg-black">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full bg-black border-b border-yellow-500 shadow-2xl shadow-yellow-500/20">
-        <div className="container flex h-20 items-center justify-between px-6">
-          <div className="flex items-center space-x-6">
+        <div className="container flex h-16 sm:h-20 items-center justify-between px-3 sm:px-6">
+          <div className="flex items-center space-x-3 sm:space-x-6 flex-1 min-w-0">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => navigate('/dashboard')}
-              className="text-white hover:text-yellow-400 hover:bg-yellow-500/20 transition-all duration-300 border border-yellow-500 hover:border-yellow-400 px-4 py-2 rounded-lg"
+              className="text-white hover:text-yellow-400 hover:bg-yellow-500/20 transition-all duration-300 border border-yellow-500 hover:border-yellow-400 px-2 sm:px-4 py-2 rounded-lg flex-shrink-0"
             >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              <span>Back to Dashboard</span>
+              <ArrowLeft className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Back to Dashboard</span>
             </Button>
-            <div className="h-8 w-px bg-yellow-500/50"></div>
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-yellow-500 rounded-full flex items-center justify-center shadow-lg">
-                <Users className="h-6 w-6 text-black" />
+            <div className="hidden sm:block h-8 w-px bg-yellow-500/50"></div>
+            <div className="flex items-center space-x-3 sm:space-x-4 min-w-0 flex-1">
+              <div className="w-8 h-8 sm:w-12 sm:h-12 bg-yellow-500 rounded-full flex items-center justify-center shadow-lg flex-shrink-0">
+                <Users className="h-4 w-4 sm:h-6 sm:w-6 text-black" />
               </div>
-              <div>
-                <h1 className="text-2xl font-bold text-white">{group.name}</h1>
-                <p className="text-yellow-400 font-medium">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-lg sm:text-2xl font-bold text-white truncate">{group.name}</h1>
+                <p className="text-yellow-400 font-medium text-xs sm:text-sm">
                   {groupMembers.length} member{groupMembers.length !== 1 ? 's' : ''}
                 </p>
               </div>
             </div>
           </div>
           
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
             <Dialog open={isAddExpenseOpen} onOpenChange={setIsAddExpenseOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 px-6 py-3 rounded-lg">
-                  <Plus className="h-5 w-5 mr-2" />
-                  Add Expense
+                <Button className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 px-3 sm:px-6 py-2 sm:py-3 rounded-lg text-sm sm:text-base">
+                  <Plus className="h-4 w-4 sm:h-5 sm:w-5 sm:mr-2" />
+                  <span className="hidden sm:inline">Add Expense</span>
                 </Button>
               </DialogTrigger>
-            <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto bg-black border-yellow-500">
+            <DialogContent className="w-[95%] sm:max-w-lg max-h-[90vh] sm:max-h-[85vh] overflow-y-auto bg-black border-yellow-500">
               <DialogHeader>
-                <DialogTitle className="flex items-center space-x-3 text-white">
-                  <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
-                    <DollarSign className="h-4 w-4 text-black" />
+                <DialogTitle className="flex items-center space-x-2 sm:space-x-3 text-white">
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-yellow-500 rounded-full flex items-center justify-center">
+                    <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-black" />
                   </div>
-                  <span className="text-xl">Add New Expense</span>
+                  <span className="text-lg sm:text-xl">Add New Expense</span>
                 </DialogTitle>
               </DialogHeader>
 
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {/* Expense Title */}
                 <div className="space-y-2">
                   <Label htmlFor="title" className="text-white font-semibold">Expense Title</Label>
@@ -517,9 +517,9 @@ const GroupExpense: React.FC = () => {
                 </div>
 
                 {/* Amount and Payer */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="amount" className="text-white font-semibold">Total Amount ($)</Label>
+                    <Label htmlFor="amount" className="text-white font-semibold text-sm sm:text-base">Total Amount ($)</Label>
                     <Input
                       id="amount"
                       type="number"
@@ -527,14 +527,14 @@ const GroupExpense: React.FC = () => {
                       placeholder="0.00"
                       value={formData.amount}
                       onChange={(e) => handleAmountChange(e.target.value)}
-                      className="bg-black/50 border-yellow-500/50 text-white placeholder:text-gray-400 focus:border-yellow-400"
+                      className="bg-black/50 border-yellow-500/50 text-white placeholder:text-gray-400 focus:border-yellow-400 h-12 sm:h-10"
                     />
                   </div>
                   
                   <div className="space-y-2">
-                    <Label className="text-white font-semibold">Who Paid?</Label>
+                    <Label className="text-white font-semibold text-sm sm:text-base">Who Paid?</Label>
                     <Select value={formData.paidBy} onValueChange={(value) => setFormData(prev => ({ ...prev, paidBy: value }))}>
-                      <SelectTrigger className="bg-black/50 border-yellow-500/50 text-white focus:border-yellow-400">
+                      <SelectTrigger className="bg-black/50 border-yellow-500/50 text-white focus:border-yellow-400 h-12 sm:h-10">
                         <SelectValue placeholder="Select payer" />
                       </SelectTrigger>
                       <SelectContent className="bg-black border-yellow-500">
@@ -552,11 +552,11 @@ const GroupExpense: React.FC = () => {
                 </div>
 
                 {/* Split Options */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-yellow-500/10 rounded-lg border border-yellow-500/30">
-                    <Label className="text-white font-semibold">Split Type</Label>
-                    <div className="flex items-center space-x-3">
-                      <span className={`text-sm font-medium ${formData.isEqualSplit ? 'text-yellow-400' : 'text-white/60'}`}>
+                <div className="space-y-3 sm:space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 bg-yellow-500/10 rounded-lg border border-yellow-500/30 space-y-3 sm:space-y-0">
+                    <Label className="text-white font-semibold text-sm sm:text-base">Split Type</Label>
+                    <div className="flex items-center justify-center sm:justify-end space-x-2 sm:space-x-3">
+                      <span className={`text-xs sm:text-sm font-medium ${formData.isEqualSplit ? 'text-yellow-400' : 'text-white/60'}`}>
                         Equal Split
                       </span>
                       <Switch
@@ -564,7 +564,7 @@ const GroupExpense: React.FC = () => {
                         onCheckedChange={(checked) => handleSplitToggle(!checked)}
                         className="data-[state=checked]:bg-yellow-500"
                       />
-                      <span className={`text-sm font-medium ${!formData.isEqualSplit ? 'text-yellow-400' : 'text-white/60'}`}>
+                      <span className={`text-xs sm:text-sm font-medium ${!formData.isEqualSplit ? 'text-yellow-400' : 'text-white/60'}`}>
                         Custom Split
                       </span>
                     </div>
@@ -643,41 +643,41 @@ const GroupExpense: React.FC = () => {
 
       {/* Main Content */}
       <main className="min-h-screen bg-black">
-        <div className="container mx-auto px-6 py-8 space-y-8">
+        <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8 space-y-4 sm:space-y-8">
           {/* Group Members */}
           <Card className="bg-black border-yellow-500/40 shadow-lg">
-            <CardHeader className="bg-yellow-500/10 border-b border-yellow-500/20 py-4">
+            <CardHeader className="bg-yellow-500/10 border-b border-yellow-500/20 py-3 sm:py-4">
               <CardTitle className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <div className="w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center">
-                    <Users className="h-3 w-3 text-black" />
+                  <div className="w-5 h-5 sm:w-6 sm:h-6 bg-yellow-500 rounded-full flex items-center justify-center">
+                    <Users className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-black" />
                   </div>
-                  <span className="text-lg font-semibold text-white">Group Members</span>
+                  <span className="text-base sm:text-lg font-semibold text-white">Group Members</span>
                 </div>
                 <div className="px-2 py-1 bg-yellow-500/30 text-yellow-200 rounded-lg text-xs font-medium">
                   {groupMembers.length} Active
                 </div>
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-4 bg-black">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <CardContent className="p-3 sm:p-4 bg-black">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
                 {groupMembers.map((member, index) => (
                   <div 
                     key={member.wallet} 
-                    className="flex items-center space-x-3 p-3 rounded-lg bg-yellow-500/5 border border-yellow-500/20 hover:bg-yellow-500/10 transition-all duration-200"
+                    className="flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 rounded-lg bg-yellow-500/5 border border-yellow-500/20 hover:bg-yellow-500/10 transition-all duration-200"
                   >
                     <div className="relative">
-                      <div className="w-8 h-8 rounded-full bg-yellow-500/30 flex items-center justify-center">
-                        <span className="text-sm font-medium text-white">
+                      <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-yellow-500/30 flex items-center justify-center">
+                        <span className="text-xs sm:text-sm font-medium text-white">
                           {(member.name || 'U').charAt(0).toUpperCase()}
                         </span>
                       </div>
                       {member.isCurrentUser && (
-                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-500 rounded-full"></div>
+                        <div className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 w-2 h-2 sm:w-3 sm:h-3 bg-yellow-500 rounded-full"></div>
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-white text-sm truncate">
+                      <p className="font-medium text-white text-xs sm:text-sm truncate">
                         {member.name}
                       </p>
                       <p className="text-xs text-white/60 truncate">
@@ -692,61 +692,61 @@ const GroupExpense: React.FC = () => {
 
           {/* Financial Summary */}
           <Card className="bg-black border border-yellow-500 shadow-2xl shadow-yellow-500/30">
-            <CardHeader className="bg-yellow-500/20 border-b border-yellow-500/30 py-6">
+            <CardHeader className="bg-yellow-500/20 border-b border-yellow-500/30 py-4 sm:py-6">
               <CardTitle className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center shadow-lg">
-                    <TrendingUp className="h-5 w-5 text-black" />
+                <div className="flex items-center space-x-2 sm:space-x-3">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-yellow-500 rounded-full flex items-center justify-center shadow-lg">
+                    <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-black" />
                   </div>
-                  <span className="text-xl font-bold text-white">Financial Dashboard</span>
+                  <span className="text-lg sm:text-xl font-bold text-white">Financial Dashboard</span>
                 </div>
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6 bg-black">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div className="text-center p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30 hover:bg-yellow-500/15 transition-all duration-200">
-                  <div className="w-10 h-10 mx-auto mb-3 bg-yellow-500/30 rounded-full flex items-center justify-center">
-                    <DollarSign className="h-5 w-5 text-yellow-400" />
+            <CardContent className="p-3 sm:p-6 bg-black">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
+                <div className="text-center p-3 sm:p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30 hover:bg-yellow-500/15 transition-all duration-200">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-2 sm:mb-3 bg-yellow-500/30 rounded-full flex items-center justify-center">
+                    <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-400" />
                   </div>
                   <p className="text-xs font-medium text-yellow-400/80 mb-1 uppercase tracking-wide">Total Expenses</p>
-                  <p className="text-xl font-bold text-white">${totalExpenses.toFixed(2)}</p>
+                  <p className="text-lg sm:text-xl font-bold text-white">${totalExpenses.toFixed(2)}</p>
                 </div>
                 
-                <div className="text-center p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30 hover:bg-yellow-500/15 transition-all duration-200">
-                  <div className="w-10 h-10 mx-auto mb-3 bg-yellow-500/30 rounded-full flex items-center justify-center">
-                    <Target className="h-5 w-5 text-yellow-400" />
+                <div className="text-center p-3 sm:p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30 hover:bg-yellow-500/15 transition-all duration-200">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-2 sm:mb-3 bg-yellow-500/30 rounded-full flex items-center justify-center">
+                    <Target className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-400" />
                   </div>
                   <p className="text-xs font-medium text-yellow-400/80 mb-1 uppercase tracking-wide">Pending Payments</p>
-                  <p className="text-xl font-bold text-white">
+                  <p className="text-lg sm:text-xl font-bold text-white">
                     {settlementData ? settlementData.transactions.length : 0}
                   </p>
                 </div>
                 
-                <div className="text-center p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30 hover:bg-yellow-500/15 transition-all duration-200">
-                  <div className="w-10 h-10 mx-auto mb-3 bg-yellow-500/30 rounded-full flex items-center justify-center">
-                    <Users className="h-5 w-5 text-yellow-400" />
+                <div className="text-center p-3 sm:p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30 hover:bg-yellow-500/15 transition-all duration-200">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-2 sm:mb-3 bg-yellow-500/30 rounded-full flex items-center justify-center">
+                    <Users className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-400" />
                   </div>
                   <p className="text-xs font-medium text-yellow-400/80 mb-1 uppercase tracking-wide">Participants</p>
-                  <p className="text-xl font-bold text-white">{groupMembers.length}</p>
+                  <p className="text-lg sm:text-xl font-bold text-white">{groupMembers.length}</p>
                 </div>
               </div>
 
               {/* Settlement Diagram */}
               {settlementData && settlementData.transactions.length > 0 && (
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
-                        <Target className="h-4 w-4 text-black" />
+                <div className="space-y-4 sm:space-y-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
+                    <div className="flex items-center space-x-2 sm:space-x-3">
+                      <div className="w-6 h-6 sm:w-8 sm:h-8 bg-yellow-500 rounded-full flex items-center justify-center">
+                        <Target className="h-3 w-3 sm:h-4 sm:w-4 text-black" />
                       </div>
-                      <h3 className="text-lg font-semibold text-white">Settlement Required</h3>
+                      <h3 className="text-base sm:text-lg font-semibold text-white">Settlement Required</h3>
                     </div>
-                    <div className="px-3 py-1 bg-yellow-500/30 text-yellow-200 rounded-lg text-xs font-medium">
+                    <div className="px-2 sm:px-3 py-1 bg-yellow-500/30 text-yellow-200 rounded-lg text-xs font-medium">
                       {settlementData.transactions.length} Payment{settlementData.transactions.length > 1 ? 's' : ''}
                     </div>
                   </div>
                   
-                  <div className="space-y-4">
+                  <div className="space-y-3 sm:space-y-4">
                     {settlementData.transactions.map((transaction: any, index: number) => {
                       const fromMember = groupMembers.find(m => 
                         m.wallet === transaction.from || m.name === transaction.from
@@ -773,29 +773,29 @@ const GroupExpense: React.FC = () => {
                       return (
                         <div 
                           key={index} 
-                          className="group p-8 rounded-2xl bg-yellow-500/10 border border-yellow-500/50 shadow-xl hover:shadow-2xl transition-all duration-300 hover:border-yellow-400"
+                          className="group p-4 sm:p-8 rounded-xl sm:rounded-2xl bg-yellow-500/10 border border-yellow-500/50 shadow-xl hover:shadow-2xl transition-all duration-300 hover:border-yellow-400"
                         >
-                          <div className="flex items-center justify-center mb-8">
-                            <div className="text-center p-6 bg-black/30 rounded-2xl border border-yellow-500/30 min-w-[280px]">
-                              <p className="text-sm text-white/70 font-medium uppercase tracking-wider mb-3">
+                          <div className="flex items-center justify-center mb-4 sm:mb-8">
+                            <div className="text-center p-4 sm:p-6 bg-black/30 rounded-xl sm:rounded-2xl border border-yellow-500/30 w-full sm:min-w-[280px]">
+                              <p className="text-xs sm:text-sm text-white/70 font-medium uppercase tracking-wider mb-2 sm:mb-3">
                                 Amount Due
                               </p>
-                              <p className="text-4xl font-black text-yellow-400 mb-2">
+                              <p className="text-2xl sm:text-4xl font-black text-yellow-400 mb-2">
                                 ${transaction.amount.toFixed(2)}
                               </p>
-                              <div className="w-16 h-1 bg-gradient-to-r from-transparent via-yellow-400 to-transparent mx-auto"></div>
+                              <div className="w-12 sm:w-16 h-1 bg-gradient-to-r from-transparent via-yellow-400 to-transparent mx-auto"></div>
                             </div>
                           </div>
                           
                           {/* Pay Button - Only show if current user is the payer */}
                           {fromMember?.isCurrentUser && (
-                            <div className="pt-6 border-t border-yellow-500/30">
+                            <div className="pt-4 sm:pt-6 border-t border-yellow-500/30">
                               <Button
                                 onClick={() => handlePayClick(transaction)}
-                                className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 px-8 py-4 rounded-xl text-lg"
+                                className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 px-4 sm:px-8 py-3 sm:py-4 rounded-lg sm:rounded-xl text-sm sm:text-lg"
                                 size="lg"
                               >
-                                <Wallet className="h-6 w-6 mr-3" />
+                                <Wallet className="h-4 w-4 sm:h-6 sm:w-6 mr-2 sm:mr-3" />
                                 Pay ${transaction.amount.toFixed(2)} Now
                               </Button>
                             </div>
@@ -807,14 +807,14 @@ const GroupExpense: React.FC = () => {
 
                   {/* Current Balances */}
                   {settlementData.balances && (
-                    <div className="mt-6">
-                      <div className="flex items-center space-x-3 mb-4">
-                        <div className="w-8 h-8 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center shadow-md">
-                          <Calculator className="h-4 w-4 text-black" />
+                    <div className="mt-4 sm:mt-6">
+                      <div className="flex items-center space-x-2 sm:space-x-3 mb-3 sm:mb-4">
+                        <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center shadow-md">
+                          <Calculator className="h-3 w-3 sm:h-4 sm:w-4 text-black" />
                         </div>
-                        <h4 className="text-lg font-bold text-white">Current Balances</h4>
+                        <h4 className="text-base sm:text-lg font-bold text-white">Current Balances</h4>
                       </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
                         {Object.entries(settlementData.balances).map(([person, balance]: [string, any], index) => {
                           const member = groupMembers.find(m => 
                             m.wallet === person || m.name === person
@@ -894,13 +894,13 @@ const GroupExpense: React.FC = () => {
 
           {/* Recent Expenses */}
           <Card className="bg-black border border-yellow-500/40 shadow-lg">
-            <CardHeader className="bg-yellow-500/10 border-b border-yellow-500/20 py-4">
-              <div className="flex items-center justify-between">
+            <CardHeader className="bg-yellow-500/10 border-b border-yellow-500/20 py-3 sm:py-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
                 <CardTitle className="flex items-center space-x-2">
-                  <div className="w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center">
-                    <History className="h-3 w-3 text-black" />
+                  <div className="w-5 h-5 sm:w-6 sm:h-6 bg-yellow-500 rounded-full flex items-center justify-center">
+                    <History className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-black" />
                   </div>
-                  <span className="text-lg font-semibold text-white">Recent Expenses</span>
+                  <span className="text-base sm:text-lg font-semibold text-white">Recent Expenses</span>
                   <div className="px-2 py-1 bg-yellow-500/30 text-yellow-200 rounded-lg text-xs font-medium">
                     {expenses.length} Total
                   </div>
@@ -908,16 +908,17 @@ const GroupExpense: React.FC = () => {
                 {expenses.length > 3 && (
                   <Dialog open={isAllExpensesOpen} onOpenChange={setIsAllExpensesOpen}>
                     <DialogTrigger asChild>
-                      <Button variant="outline" size="sm" className="border-yellow-500 text-yellow-400 hover:bg-yellow-500/20 hover:border-yellow-400 transition-all duration-300">
-                        <Eye className="h-4 w-4 mr-2" />
-                        <span>View All Expenses</span>
+                      <Button variant="outline" size="sm" className="border-yellow-500 text-yellow-400 hover:bg-yellow-500/20 hover:border-yellow-400 transition-all duration-300 text-xs sm:text-sm">
+                        <Eye className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">View All Expenses</span>
+                        <span className="sm:hidden">View All</span>
                       </Button>
                     </DialogTrigger>
-                  <DialogContent className="sm:max-w-2xl max-h-[90vh] bg-black border-yellow-500">
-                    <DialogHeader className="border-b border-yellow-500/30 pb-4">
-                      <DialogTitle className="text-2xl font-bold text-white flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
-                          <CreditCard className="h-4 w-4 text-black" />
+                  <DialogContent className="w-[95%] sm:max-w-2xl max-h-[90vh] bg-black border-yellow-500">
+                    <DialogHeader className="border-b border-yellow-500/30 pb-3 sm:pb-4">
+                      <DialogTitle className="text-lg sm:text-2xl font-bold text-white flex items-center space-x-2 sm:space-x-3">
+                        <div className="w-6 h-6 sm:w-8 sm:h-8 bg-yellow-500 rounded-full flex items-center justify-center">
+                          <CreditCard className="h-3 w-3 sm:h-4 sm:w-4 text-black" />
                         </div>
                         <span>All Expenses - {group.name}</span>
                       </DialogTitle>
@@ -959,46 +960,46 @@ const GroupExpense: React.FC = () => {
               )}
             </div>
           </CardHeader>
-          <CardContent className="p-6 bg-black">
+          <CardContent className="p-3 sm:p-6 bg-black">
             {expenses.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="w-20 h-20 mx-auto mb-6 bg-yellow-500/20 rounded-full flex items-center justify-center shadow-xl border border-yellow-500/50">
-                  <CreditCard className="h-10 w-10 text-yellow-400" />
+              <div className="text-center py-8 sm:py-12">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 bg-yellow-500/20 rounded-full flex items-center justify-center shadow-xl border border-yellow-500/50">
+                  <CreditCard className="h-8 w-8 sm:h-10 sm:w-10 text-yellow-400" />
                 </div>
-                <h3 className="text-xl font-bold text-white mb-3">No expenses added yet</h3>
-                <p className="text-white/70 mb-6">Start tracking expenses with your group members</p>
-                <Button onClick={() => setIsAddExpenseOpen(true)} className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-6 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300">
-                  <Plus className="h-4 w-4 mr-2" />
+                <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">No expenses added yet</h3>
+                <p className="text-white/70 mb-4 sm:mb-6 text-sm sm:text-base">Start tracking expenses with your group members</p>
+                <Button onClick={() => setIsAddExpenseOpen(true)} className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-4 sm:px-6 py-2 sm:py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 text-sm sm:text-base">
+                  <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
                   Add First Expense
                 </Button>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2 sm:space-y-3">
                 {expenses.slice(0, 3).map((expense, index) => (
-                  <div key={expense.id || index} className="p-4 rounded-lg bg-yellow-500/5 border border-yellow-500/20 hover:bg-yellow-500/10 transition-all duration-200">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <h4 className="font-medium text-white text-base mb-1">{expense.title}</h4>
-                        <p className="text-white/70 text-sm">
+                  <div key={expense.id || index} className="p-3 sm:p-4 rounded-lg bg-yellow-500/5 border border-yellow-500/20 hover:bg-yellow-500/10 transition-all duration-200">
+                    <div className="flex items-start justify-between mb-2 sm:mb-3">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium text-white text-sm sm:text-base mb-1 truncate">{expense.title}</h4>
+                        <p className="text-white/70 text-xs sm:text-sm">
                           Paid by <span className="text-yellow-400">{expense.paidByName || 'Unknown'}</span>
                         </p>
                       </div>
-                      <div className="text-right">
-                        <p className="font-bold text-yellow-400 text-lg">${expense.totalAmount.toFixed(2)}</p>
+                      <div className="text-right flex-shrink-0">
+                        <p className="font-bold text-yellow-400 text-base sm:text-lg">${expense.totalAmount.toFixed(2)}</p>
                         <p className="text-white/50 text-xs">
                           {new Date(expense.createdAt).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-1 sm:gap-2">
                       {expense.members.slice(0, 3).map((member: any) => (
-                        <Badge key={member.id} className={`${member.isPaid ? "bg-yellow-500/30 text-yellow-300 border-yellow-500" : "bg-yellow-500/10 text-white border-yellow-500/50"} text-sm py-1 px-3`}>
+                        <Badge key={member.id} className={`${member.isPaid ? "bg-yellow-500/30 text-yellow-300 border-yellow-500" : "bg-yellow-500/10 text-white border-yellow-500/50"} text-xs sm:text-sm py-1 px-2 sm:px-3`}>
                           {member.name}: ${member.amount.toFixed(2)}
                         </Badge>
                       ))}
                       {expense.members.length > 3 && (
-                        <Badge className="bg-yellow-500/20 text-yellow-300 border-yellow-500/50 text-sm py-1 px-3">
-                          +{expense.members.length - 3} more members
+                        <Badge className="bg-yellow-500/20 text-yellow-300 border-yellow-500/50 text-xs sm:text-sm py-1 px-2 sm:px-3">
+                          +{expense.members.length - 3} more
                         </Badge>
                       )}
                     </div>
