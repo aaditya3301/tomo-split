@@ -1,5 +1,5 @@
-import React, { ReactNode, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { ReactNode, useEffect, useState, useRef } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useMultiChainWallet } from '@/contexts/MultiChainWalletContext'
 import { Loader2 } from 'lucide-react'
 
@@ -10,20 +10,43 @@ interface ProtectedRouteProps {
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { isConnected, isLoading } = useMultiChainWallet()
   const navigate = useNavigate()
+  const location = useLocation()
+  const [canRedirect, setCanRedirect] = useState(false)
+  const redirectAttempted = useRef(false)
 
   useEffect(() => {
-    if (!isLoading && !isConnected) {
-      // Redirect to home page to select wallet
-      navigate('/')
-    }
-  }, [isConnected, isLoading, navigate])
+    // Allow redirection after a shorter delay to give wallets time to auto-reconnect
+    const timer = setTimeout(() => {
+      setCanRedirect(true)
+    }, 800) // Reduced to 800ms for better UX
 
-  if (isLoading) {
+    return () => clearTimeout(timer)
+  }, [])
+
+  useEffect(() => {
+    // Only redirect if we can redirect, not loading, not connected, and haven't already redirected
+    if (canRedirect && !isLoading && !isConnected && !redirectAttempted.current) {
+      redirectAttempted.current = true
+      console.log('🔄 ProtectedRoute: No wallet connection, redirecting to home')
+      navigate('/', { replace: true })
+    }
+  }, [canRedirect, isLoading, isConnected, navigate])
+
+  // Reset redirect attempt if user becomes connected
+  useEffect(() => {
+    if (isConnected) {
+      redirectAttempted.current = false
+    }
+  }, [isConnected])
+
+  if (isLoading || !canRedirect) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-yellow-400" />
-          <p className="text-white/70">Connecting wallet...</p>
+          <p className="text-white/70">
+            {isLoading ? 'Connecting wallet...' : 'Loading...'}
+          </p>
         </div>
       </div>
     )

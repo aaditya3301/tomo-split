@@ -52,7 +52,8 @@ export const MultiChainWalletProvider: React.FC<MultiChainWalletProviderProps> =
 }) => {
   const [currentAccount, setCurrentAccount] = useState<MultiChainAccount | null>(null)
   const [chainType, setChainType] = useState<ChainType | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true) // Start with true to handle initial page load
+  const [hasInitialized, setHasInitialized] = useState(false)
 
   // EVM hooks
   const { address: evmAddress, isConnected: evmConnected } = useAccount()
@@ -69,6 +70,17 @@ export const MultiChainWalletProvider: React.FC<MultiChainWalletProviderProps> =
     reverseResolveANS
   } = useAptosWallet()
 
+  // Initialize and handle connection state
+  useEffect(() => {
+    // Set a timer to mark initialization as complete
+    const initTimer = setTimeout(() => {
+      setHasInitialized(true)
+      setIsLoading(false)
+    }, 1500) // Give wallets time to auto-connect
+
+    return () => clearTimeout(initTimer)
+  }, [])
+
   // Update current account based on connections
   useEffect(() => {
     if (evmConnected && evmAddress) {
@@ -77,17 +89,22 @@ export const MultiChainWalletProvider: React.FC<MultiChainWalletProviderProps> =
         chainType: 'EVM'
       })
       setChainType('EVM')
+      setIsLoading(false)
+      setHasInitialized(true)
     } else if (aptosConnected && aptosAccount) {
       setCurrentAccount({
         address: aptosAccount.address,
         chainType: 'APTOS'
       })
       setChainType('APTOS')
-    } else {
+      setIsLoading(false)
+      setHasInitialized(true)
+    } else if (hasInitialized) {
+      // Only clear account if we've finished initialization
       setCurrentAccount(null)
       setChainType(null)
     }
-  }, [evmConnected, evmAddress, aptosConnected, aptosAccount])
+  }, [evmConnected, evmAddress, aptosConnected, aptosAccount, hasInitialized])
 
   // Connect to EVM wallets
   const connectEVM = async () => {

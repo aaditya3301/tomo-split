@@ -23,7 +23,8 @@ import {
 import { useAccount, useWalletClient } from 'wagmi'
 import { getPaymentService, PaymentParams } from '@/services/uniswapV4PaymentService'
 import { ethers } from 'ethers'
-import UniswapV4Widget from './UniswapV4Widget'
+import MultiChainPaymentWidget from './MultiChainPaymentWidget'
+import { PaymentMethodId } from '@/types/paymentMethods'
 
 interface PaymentModalProps {
   isOpen: boolean
@@ -58,10 +59,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle')
   const [error, setError] = useState<string>('')
   const [transactionId, setTransactionId] = useState<string>('')
-  const [paymentMethod, setPaymentMethod] = useState<'swap' | 'direct'>('swap')
-  const [activeTab, setActiveTab] = useState<'swap' | 'direct'>('swap')
+  const [autoSelectedMethod, setAutoSelectedMethod] = useState<PaymentMethodId>('evm-native')
 
-  const handleSwapComplete = async (txHash: string, amountOut: number) => {
+  const handleSwapComplete = async (txHash: string, method: PaymentMethodId, amountOut: number) => {
     setPaymentStatus('success')
     setTransactionId(txHash)
     
@@ -76,58 +76,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     setError(error)
   }
 
-  const handlePayment = async () => {
-    if (!isConnected || !address || !walletClient) {
-      setError('Please connect your wallet first')
-      return
-    }
 
-    setIsProcessing(true)
-    setPaymentStatus('processing')
-    setError('')
-
-    try {
-      // Initialize payment service with ethers provider
-      const provider = new ethers.BrowserProvider(walletClient as any)
-      const signer = await provider.getSigner()
-      const paymentService = getPaymentService(provider)
-      await paymentService.initialize(signer)
-
-      const paymentParams: PaymentParams = {
-        receiverAddress: transaction.to,
-        amount: transaction.amount,
-        groupId,
-        splitId: `split-${Date.now()}`, // You can pass actual split ID if available
-        groupName,
-        receiverName: toMemberName
-      }
-
-      let result
-      if (paymentMethod === 'swap') {
-        result = await paymentService.executePayment(paymentParams)
-      } else {
-        result = await paymentService.recordManualPayment(paymentParams)
-      }
-
-      if (result.success && result.transactionId) {
-        setPaymentStatus('success')
-        setTransactionId(result.transactionId)
-        
-        // Call success callback
-        if (onPaymentSuccess) {
-          onPaymentSuccess(result.transactionId)
-        }
-      } else {
-        setPaymentStatus('error')
-        setError(result.error || 'Payment failed')
-      }
-    } catch (err: any) {
-      setPaymentStatus('error')
-      setError(err.message || 'An unexpected error occurred')
-    } finally {
-      setIsProcessing(false)
-    }
-  }
 
   const handleClose = () => {
     if (!isProcessing) {
@@ -149,7 +98,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             <span className="text-xl font-bold">Process Payment</span>
           </DialogTitle>
           <DialogDescription className="text-white/70">
-            Pay your share using Uniswap V4 or direct transfer
+            Choose your preferred payment method for cross-chain transactions
           </DialogDescription>
         </DialogHeader>
 
@@ -209,89 +158,88 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             </div>
           </div>
 
-          {/* Payment Method Tabs */}
-          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'swap' | 'direct')} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="swap" className="flex items-center space-x-2">
-                <Zap className="h-4 w-4" />
-                <span>Swap & Pay</span>
-              </TabsTrigger>
-              <TabsTrigger value="direct" className="flex items-center space-x-2">
-                <Wallet className="h-4 w-4" />
-                <span>Direct Transfer</span>
-              </TabsTrigger>
-            </TabsList>
-
-            {/* Swap Tab */}
-            <TabsContent value="swap" className="space-y-4">
-
-              {/* Uniswap V4 Widget */}
-              <UniswapV4Widget
-                targetAmount={transaction.amount}
-                recipient={transaction.to}
-                groupId={groupId}
-                splitId={`split-${Date.now()}`}
-                groupName={groupName}
-                receiverName={toMemberName}
-                onSwapComplete={handleSwapComplete}
-                onError={handleSwapError}
-              />
-            </TabsContent>
-
-            {/* Direct Transfer Tab */}
-            <TabsContent value="direct" className="space-y-4">
-              <div className="text-sm text-muted-foreground bg-yellow-50 dark:bg-yellow-950 p-3 rounded-lg border border-yellow-200 dark:border-yellow-800">
-                <div className="flex items-start space-x-2">
-                  <Wallet className="h-4 w-4 text-yellow-600 mt-0.5" />
-                  <div>
-                    <p className="font-semibold text-yellow-900 dark:text-yellow-100">Direct Payment</p>
-                    <p className="text-xs text-yellow-700 dark:text-yellow-300">
-                      Record a payment made outside the platform or transfer directly.
-                    </p>
+          {/* Payment Method Display - Auto-Selected */}
+          <div className="space-y-4">
+            <div className="text-center">
+              <div className="text-sm font-medium text-muted-foreground mb-2">
+                Auto-Selected Payment Method
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {/* APT to USDC Button */}
+              <div
+                className={`h-auto p-3 flex flex-col space-y-2 transition-all duration-200 border rounded-md cursor-default ${
+                  autoSelectedMethod === 'aptos-native' 
+                    ? 'bg-gradient-to-r from-green-400 to-green-500 text-white border-green-400 shadow-lg' 
+                    : 'border-border bg-muted/30 opacity-50'
+                }`}
+              >
+                <Zap className={`h-5 w-5 mx-auto ${autoSelectedMethod === 'aptos-native' ? 'text-white' : 'text-green-500'}`} />
+                <div className="text-center">
+                  <div className="font-semibold text-xs">APT to USDC</div>
+                  <div className={`text-xs ${autoSelectedMethod === 'aptos-native' ? 'text-white/70' : 'text-muted-foreground'}`}>
+                    Aptos Chain
                   </div>
-                </div>
-              </div>
-
-              <div className="space-y-4 p-4 border rounded-lg">
-                <div className="space-y-2">
-                  <Label>Payment Method</Label>
-                  <p className="text-sm text-muted-foreground">
-                    This will record the payment on-chain through our smart contract.
-                  </p>
-                </div>
-
-                <Button
-                  onClick={handlePayment}
-                  disabled={!isConnected || isProcessing}
-                  className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-semibold h-12"
-                >
-                  {isProcessing ? (
-                    <>
-                      <motion.img
-                        src="/favicon.ico"
-                        alt="Processing"
-                        className="w-4 h-4 mr-2"
-                        initial={{ scale: 0.8, opacity: 0.7 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ 
-                          duration: 1.2, 
-                          repeat: Infinity, 
-                          repeatType: "reverse",
-                          ease: "easeInOut"
-                        }}
-                      />
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      <Wallet className="h-4 w-4 mr-2" />
-                      Record Payment ${transaction.amount.toFixed(2)}
-                    </>
+                  {autoSelectedMethod === 'aptos-native' && (
+                    <div className="text-xs text-white/80 mt-1 font-medium">✓ Selected</div>
                   )}
-                </Button>
+                </div>
               </div>
-            </TabsContent>
-          </Tabs>
+
+              {/* Aptos to EVM Button */}
+              <div
+                className={`h-auto p-3 flex flex-col space-y-2 transition-all duration-200 border rounded-md cursor-default ${
+                  autoSelectedMethod === 'aptos-to-evm' 
+                    ? 'bg-gradient-to-r from-purple-400 to-purple-500 text-white border-purple-400 shadow-lg' 
+                    : 'border-border bg-muted/30 opacity-50'
+                }`}
+              >
+                <ArrowRightLeft className={`h-5 w-5 mx-auto ${autoSelectedMethod === 'aptos-to-evm' ? 'text-white' : 'text-purple-500'}`} />
+                <div className="text-center">
+                  <div className="font-semibold text-xs">Aptos to EVM</div>
+                  <div className={`text-xs ${autoSelectedMethod === 'aptos-to-evm' ? 'text-white/70' : 'text-muted-foreground'}`}>
+                    Cross-Chain
+                  </div>
+                  {autoSelectedMethod === 'aptos-to-evm' && (
+                    <div className="text-xs text-white/80 mt-1 font-medium">✓ Selected</div>
+                  )}
+                </div>
+              </div>
+
+              {/* ETH to USDC Button */}
+              <div
+                className={`h-auto p-3 flex flex-col space-y-2 transition-all duration-200 border rounded-md cursor-default ${
+                  autoSelectedMethod === 'evm-native' 
+                    ? 'bg-gradient-to-r from-blue-400 to-blue-500 text-white border-blue-400 shadow-lg' 
+                    : 'border-border bg-muted/30 opacity-50'
+                }`}
+              >
+                <ArrowRightLeft className={`h-5 w-5 mx-auto ${autoSelectedMethod === 'evm-native' ? 'text-white' : 'text-blue-500'}`} />
+                <div className="text-center">
+                  <div className="font-semibold text-xs">ETH to USDC</div>
+                  <div className={`text-xs ${autoSelectedMethod === 'evm-native' ? 'text-white/70' : 'text-muted-foreground'}`}>
+                    EVM Chain
+                  </div>
+                  {autoSelectedMethod === 'evm-native' && (
+                    <div className="text-xs text-white/80 mt-1 font-medium">✓ Selected</div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Multi-Chain Payment Widget */}
+          <MultiChainPaymentWidget
+            targetAmount={transaction.amount}
+            recipient={transaction.to}
+            groupId={groupId}
+            splitId={`split-${Date.now()}`}
+            groupName={groupName}
+            receiverName={toMemberName}
+            onPaymentComplete={handleSwapComplete}
+            onError={handleSwapError}
+            onMethodDetected={setAutoSelectedMethod}
+          />
 
           {/* Status Messages */}
           {paymentStatus === 'processing' && (

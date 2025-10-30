@@ -5,6 +5,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { WalletProvider } from "@/contexts/WalletContext";
 import { AptosWalletProvider } from "@/contexts/AptosWalletContext";
 import { MultiChainWalletProvider } from "@/contexts/MultiChainWalletContext";
+import { WormholePortalProvider } from "@/contexts/WormholePortalContext";
+import { GlobalWormholePortal } from "@/components/GlobalWormholePortal";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import GroupExpense from "./pages/GroupExpense";
@@ -18,33 +20,37 @@ const App = () => {
       <WalletProvider>
         <AptosWalletProvider>
           <MultiChainWalletProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                      <Route 
-                        path="/dashboard" 
-                        element={
-                          <ProtectedRoute>
-                            <Dashboard />
-                          </ProtectedRoute>
-                        } 
-                      />
-                      <Route 
-                        path="/group/:groupId" 
-                        element={
-                          <ProtectedRoute>
-                            <GroupExpense />
-                          </ProtectedRoute>
-                        } 
-                      />
-                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </BrowserRouter>
-            </TooltipProvider>
+            <WormholePortalProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <BrowserRouter>
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                        <Route 
+                          path="/dashboard" 
+                          element={
+                            <ProtectedRoute>
+                              <Dashboard />
+                            </ProtectedRoute>
+                          } 
+                        />
+                        <Route 
+                          path="/group/:groupId" 
+                          element={
+                            <ProtectedRoute>
+                              <GroupExpense />
+                            </ProtectedRoute>
+                          } 
+                        />
+                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </BrowserRouter>
+                {/* Global Wormhole Portal - outside all dialogs */}
+                <GlobalWormholePortal />
+              </TooltipProvider>
+            </WormholePortalProvider>
           </MultiChainWalletProvider>
         </AptosWalletProvider>
       </WalletProvider>

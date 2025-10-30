@@ -30,7 +30,7 @@ import {
   Wallet
 } from 'lucide-react'
 import { useDatabase } from '@/hooks/useDatabase'
-import { useAccount } from 'wagmi'
+import { useMultiChainWallet } from '@/contexts/MultiChainWalletContext'
 import { calculateGroupSettlement } from '@/services/debtSettlementService'
 import PaymentModal from '@/components/PaymentModal'
 import { apiService } from '@/services/apiService'
@@ -46,7 +46,8 @@ interface ExpenseFormData {
 const GroupExpense: React.FC = () => {
   const { groupId } = useParams<{ groupId: string }>()
   const navigate = useNavigate()
-  const { address } = useAccount()
+  const { currentAccount, isConnected } = useMultiChainWallet()
+  const address = currentAccount?.address
   const { groups, friends, createSplit, refreshAll, userDues, recordPayment } = useDatabase()
   const { toast } = useToast()
 
@@ -100,6 +101,14 @@ const GroupExpense: React.FC = () => {
             isENS: friendData?.isENS || false,
             isCurrentUser: memberWallet === address
           }
+        })
+        
+        console.log('🔍 Wallet connection debug:', {
+          connectedAddress: address,
+          isConnected,
+          currentAccount,
+          groupMembers: members,
+          currentUser: members.find(m => m.isCurrentUser)
         })
         
         setGroupMembers(members)
@@ -319,12 +328,16 @@ const GroupExpense: React.FC = () => {
 
   // Handle payment button click
   const handlePayClick = (transaction: any) => {
+    console.log('🔥 Pay button clicked!', transaction)
     const fromMember = groupMembers.find(m => 
       m.wallet === transaction.from || m.name === transaction.from
     )
     const toMember = groupMembers.find(m => 
       m.wallet === transaction.to || m.name === transaction.to
     )
+
+    console.log('👤 From member:', fromMember)
+    console.log('👤 To member:', toMember)
 
     setSelectedTransaction({
       from: fromMember?.wallet || transaction.from,
@@ -334,6 +347,7 @@ const GroupExpense: React.FC = () => {
       toName: toMember?.name || transaction.to,
       description: `Payment for ${group.name}`
     })
+    console.log('💰 Opening payment modal...')
     setIsPaymentModalOpen(true)
   }
 
@@ -740,6 +754,21 @@ const GroupExpense: React.FC = () => {
                       const toMember = groupMembers.find(m => 
                         m.wallet === transaction.to || m.name === transaction.to
                       )
+                      
+                      // Debug logs
+                      console.log('🔍 Settlement transaction debug:', {
+                        transaction,
+                        fromMember,
+                        toMember,
+                        currentAddress: address,
+                        currentAccount: currentAccount,
+                        fromMemberIsCurrentUser: fromMember?.isCurrentUser,
+                        groupMembers: groupMembers.map(m => ({ 
+                          wallet: m.wallet, 
+                          name: m.name, 
+                          isCurrentUser: m.isCurrentUser 
+                        }))
+                      })
                       
                       return (
                         <div 
